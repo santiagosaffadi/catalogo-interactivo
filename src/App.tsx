@@ -203,9 +203,14 @@ export default function App() {
   const [draggedImageIdx, setDraggedImageIdx] = useState<number | null>(null);
 
   // --- Preview Simulator State ---
-  const [simPageIndex, setSimPageIndex] = useState<number>(() => {
+  const [simPageIndex, setRawSimPageIndex] = useState<number>(() => {
     return DEFAULT_SETTINGS.enableCoverVideo !== false ? -1 : 0;
   });
+  const [navigatedPhotoId, setNavigatedPhotoId] = useState<string | null>(null);
+  const setSimPageIndex = (index: React.SetStateAction<number>) => {
+    setNavigatedPhotoId(null);
+    setRawSimPageIndex(index);
+  };
   const [simActiveImages, setSimActiveImages] = useState<Record<string, number>>({});
   const [isSimGridViewOpen, setIsSimGridViewOpen] = useState(false);
   const [isSimCoverPlaying, setIsSimCoverPlaying] = useState(false);
@@ -229,7 +234,13 @@ export default function App() {
         setSettings(prev => ({ ...prev, ...storedSettings }));
       }
       const restoredSettings = storedSettings && typeof storedSettings === "object" ? storedSettings : settings;
-      setSimPageIndex((restoredSettings.coverType ?? (restoredSettings.enableCoverVideo === false ? "none" : "video")) === "none" ? 0 : -1);
+      const restoredCover = restoredSettings.coverType ?? (restoredSettings.enableCoverVideo === false ? "none" : "video");
+      setSimPageIndex(restoredCover === "none" ? 0 : -1);
+      const restoredProducts = Array.isArray(storedProducts) ? storedProducts : products;
+      if (restoredCover === "none" && restoredProducts.length) {
+        const firstPhoto = (restoredSettings.editorialPages || []).find(page => page.beforeProductId === restoredProducts[0].id);
+        if (firstPhoto) setNavigatedPhotoId(firstPhoto.id);
+      }
       setStorageReady(true);
     })();
     return () => { cancelled = true; };
@@ -981,6 +992,10 @@ export default function App() {
         // Reset simulator page index to cover
         const importedCoverType = importedSettings?.coverType ?? (importedSettings?.enableCoverVideo === false ? "none" : "video");
         setSimPageIndex(importedCoverType === "none" ? 0 : -1);
+        if (importedCoverType === "none" && sanitizedProducts.length && Array.isArray(importedSettings?.editorialPages)) {
+          const firstPhoto = importedSettings.editorialPages.find((page: any) => page && typeof page.id === "string" && typeof page.image === "string" && /^data:image\/(jpeg|png|webp);base64,/i.test(page.image) && page.beforeProductId === sanitizedProducts[0].id);
+          if (firstPhoto) setNavigatedPhotoId(firstPhoto.id);
+        }
         
         alert("¡Catálogo importado con éxito!");
       }
@@ -1006,17 +1021,30 @@ export default function App() {
   const hasSimCover = coverType !== "none";
   const minSimIndex = hasSimCover ? -1 : 0;
 
-  const handleSimNextPage = () => {
-    if (simPageIndex < products.length) {
-      setSimPageIndex((prev) => prev + 1);
-    }
+  // Keep the product index used by the editor, while navigating through
+  // presentation photos in their chosen positions in the simulator.
+  type PreviewPage = { kind: "cover" | "summary" } | { kind: "product"; index: number } | { kind: "photo"; page: EditorialPage };
+  const previewPages: PreviewPage[] = [];
+  if (hasSimCover) previewPages.push({ kind: "cover" });
+  const editorialPages = settings.editorialPages || [];
+  products.forEach((product, index) => {
+    editorialPages.filter(page => page.beforeProductId === product.id).forEach(page => previewPages.push({ kind: "photo", page }));
+    previewPages.push({ kind: "product", index });
+  });
+  const productIds = new Set(products.map(product => product.id));
+  if (products.length) editorialPages.filter(page => !page.beforeProductId || !productIds.has(page.beforeProductId)).forEach(page => previewPages.push({ kind: "photo", page }));
+  previewPages.push({ kind: "summary" });
+  const navigatedPhoto = editorialPages.find(page => page.id === navigatedPhotoId) || null;
+  const previewPosition = previewPages.findIndex(page => navigatedPhoto ? page.kind === "photo" && page.page.id === navigatedPhoto.id : simPageIndex === -1 ? page.kind === "cover" : simPageIndex === products.length ? page.kind === "summary" : page.kind === "product" && page.index === simPageIndex);
+  const showPreviewPage = (page: PreviewPage | undefined) => {
+    if (!page) return;
+    if (page.kind === "photo") { setIsSimCoverPlaying(false); setNavigatedPhotoId(page.page.id); }
+    else if (page.kind === "cover") setSimPageIndex(-1);
+    else if (page.kind === "summary") setSimPageIndex(products.length);
+    else if (page.kind === "product") setSimPageIndex(page.index);
   };
-
-  const handleSimPrevPage = () => {
-    if (simPageIndex > minSimIndex) {
-      setSimPageIndex((prev) => prev - 1);
-    }
-  };
+  const handleSimNextPage = () => showPreviewPage(previewPages[previewPosition + 1]);
+  const handleSimPrevPage = () => showPreviewPage(previewPages[previewPosition - 1]);
 
   const setSimActiveImageForProduct = (prodId: string, imgIdx: number) => {
     setSimActiveImages((prev) => ({
@@ -1063,7 +1091,7 @@ export default function App() {
             <p className="text-[9px] font-bold tracking-widest">✦ NOS PREPARAMOS PARA LAS FIESTAS ✦</p>
             <h2 className="font-serif font-bold text-3xl my-3 leading-tight">Cápsula<br />Navideña</h2>
             <p className="text-xs mb-4">Una colección para vivir momentos mágicos</p>
-            <button type="button" onClick={() => setSimPageIndex(0)} className="rounded-full px-5 py-2.5 bg-[#a92e38] text-white font-bold text-xs">Ver colección →</button>
+            <button type="button" onClick={handleSimNextPage} className="rounded-full px-5 py-2.5 bg-[#a92e38] text-white font-bold text-xs">Ver colección →</button>
           </div>
         </div>
       );
@@ -1138,7 +1166,7 @@ export default function App() {
         e.stopPropagation();
       }
       setIsSimCoverPlaying(false);
-      setSimPageIndex(0);
+      handleSimNextPage();
     };
 
     const containerClasses = isDesktopModal
@@ -1442,6 +1470,10 @@ export default function App() {
               setIsSimCoverPlaying(false);
               setSettings({ ...settings, coverType: next, enableCoverVideo: next !== "none" });
               setSimPageIndex(next === "none" ? 0 : -1);
+              if (next === "none" && products.length) {
+                const firstPhoto = (settings.editorialPages || []).find(page => page.beforeProductId === products[0].id);
+                if (firstPhoto) setNavigatedPhotoId(firstPhoto.id);
+              }
             }} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-semibold mb-3">
               <option value="video">Portada con video</option>
               <option value="christmas">Portada navideña</option>
@@ -2459,7 +2491,9 @@ export default function App() {
                   </div>
                 )}
 
-                {simPageIndex === products.length ? (
+                {navigatedPhoto ? (
+                  <div className="flex-1 min-h-0 bg-black"><img src={navigatedPhoto.image} alt="Foto de presentación del catálogo" className="w-full h-full" style={{ objectFit: navigatedPhoto.fit || "cover" }} /></div>
+                ) : simPageIndex === products.length ? (
                   // SUMMARY PAGE IN SIMULATOR
                   <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar p-3.5 justify-between">
                     <div className="space-y-4">
@@ -3051,7 +3085,7 @@ export default function App() {
                 <div className="absolute top-[32%] -translate-y-1/2 left-2 z-20">
                   <button
                     onClick={handleSimPrevPage}
-                    disabled={simPageIndex === minSimIndex}
+                    disabled={previewPosition <= 0}
                     className="w-7 h-7 rounded-full bg-white/95 shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 disabled:opacity-20 disabled:pointer-events-none transition-all active:scale-90"
                   >
                     <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
@@ -3060,7 +3094,7 @@ export default function App() {
                 <div className="absolute top-[32%] -translate-y-1/2 right-2 z-20">
                   <button
                     onClick={handleSimNextPage}
-                    disabled={simPageIndex === products.length}
+                    disabled={previewPosition >= previewPages.length - 1}
                     className="w-7 h-7 rounded-full bg-white/95 shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 disabled:opacity-20 disabled:pointer-events-none transition-all active:scale-90"
                   >
                     <ChevronRight className="w-4 h-4 stroke-[2.5]" />
@@ -3122,7 +3156,9 @@ export default function App() {
 
             {/* Modal Body: Full Desktop Catalog Simulator or Mosaic Grid */}
             <div className="flex-1 overflow-y-auto p-6 bg-slate-100 flex items-center justify-center">
-              {isPcMosaicOpen ? (
+              {navigatedPhoto && !isPcMosaicOpen ? (
+                <div className="w-full h-full bg-black flex items-center justify-center"><img src={navigatedPhoto.image} alt="Foto de presentación del catálogo" className="w-full h-full" style={{ objectFit: navigatedPhoto.fit || "cover" }} /></div>
+              ) : isPcMosaicOpen ? (
                 <div className="w-full max-w-[1180px] bg-white rounded-2xl shadow-lg border border-slate-200 p-6 space-y-4 my-auto">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                     <div>
