@@ -1,0 +1,8 @@
+{
+  "name": "Catalogo Con venta ",
+  "description": "Crea catálogos interactivos para tus productos. Sube imágenes, define precios minoristas (el mayorista se calcula automáticamente al 50%) y exporta un archivo HTML interactivo y autocontenido para compartir por WhatsApp o email que permita realizar un pedido, ",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
