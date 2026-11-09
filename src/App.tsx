@@ -147,7 +147,12 @@ export default function App() {
   // --- Persistent State ---
   const [products, setProducts] = useState<Product[]>(() => {
     const saved = safeStorage.getItem("catalog_products");
-    return saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
+    try {
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) ? parsed : DEFAULT_PRODUCTS;
+    } catch {
+      return DEFAULT_PRODUCTS;
+    }
   });
 
   const [settings, setSettings] = useState<CatalogSettings>(() => {
@@ -173,7 +178,9 @@ export default function App() {
   const [activeProductId, setActiveProductId] = useState<string>("");
   const [previewDevice, setPreviewDevice] = useState<"mobile" | "desktop">("mobile");
   const [dragOver, setDragOver] = useState(false);
-  const [autoSaved, setAutoSaved] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<"loading" | "saving" | "saved" | "error">("loading");
+  const [storageReady, setStorageReady] = useState(false);
+  const saveQueue = useRef(Promise.resolve());
   const [sidebarViewMode, setSidebarViewMode] = useState<"list" | "grid">("list");
   const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
   
@@ -197,22 +204,22 @@ export default function App() {
   const simYoutubeIframeRef = useRef<HTMLIFrameElement | null>(null);
   const desktopYoutubeIframeRef = useRef<HTMLIFrameElement | null>(null);
 
-  // Load large catalog backup from IndexedDB on initial mount if available
+  // Restore IndexedDB before allowing edits or writing any initial state.
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      try {
-        const idbProducts = await idbGet<Product[]>("catalog_products_idb");
-        if (idbProducts && Array.isArray(idbProducts) && idbProducts.length > products.length) {
-          setProducts(idbProducts);
-        }
-        const idbSettings = await idbGet<CatalogSettings>("catalog_settings_idb");
-        if (idbSettings && typeof idbSettings === "object") {
-          setSettings((prev) => ({ ...prev, ...idbSettings }));
-        }
-      } catch (e) {
-        console.warn("IndexedDB initial load error:", e);
+      const [storedProducts, storedSettings] = await Promise.all([
+        idbGet<Product[]>("catalog_products_idb"),
+        idbGet<CatalogSettings>("catalog_settings_idb"),
+      ]);
+      if (cancelled) return;
+      if (Array.isArray(storedProducts)) setProducts(storedProducts);
+      if (storedSettings && typeof storedSettings === "object") {
+        setSettings(prev => ({ ...prev, ...storedSettings }));
       }
+      setStorageReady(true);
     })();
+    return () => { cancelled = true; };
   }, []);
 
   // Initialize active product ID on load
@@ -222,16 +229,23 @@ export default function App() {
     }
   }, [products, activeProductId]);
 
-  // Synchronize localStorage and IndexedDB with state
+  // Serialize writes so an older save cannot finish after a newer one.
   useEffect(() => {
-    safeStorage.setItem("catalog_products", JSON.stringify(products));
-    safeStorage.setItem("catalog_settings", JSON.stringify(settings));
-    idbSet("catalog_products_idb", products);
-    idbSet("catalog_settings_idb", settings);
-    setAutoSaved(true);
-    const timer = setTimeout(() => setAutoSaved(false), 1500);
-    return () => clearTimeout(timer);
-  }, [products, settings]);
+    if (!storageReady) return;
+    let current = true;
+    setSaveStatus("saving");
+    saveQueue.current = saveQueue.current.then(async () => {
+      const [productsSaved, settingsSaved] = await Promise.all([
+        idbSet("catalog_products_idb", products),
+        idbSet("catalog_settings_idb", settings),
+      ]);
+      // Keep the smaller legacy copy for browsers where it fits.
+      safeStorage.setItem("catalog_products", JSON.stringify(products));
+      safeStorage.setItem("catalog_settings", JSON.stringify(settings));
+      if (current) setSaveStatus(productsSaved && settingsSaved ? "saved" : "error");
+    });
+    return () => { current = false; };
+  }, [products, settings, storageReady]);
 
   // --- Simulator Orders State & Customer Contact Info ---
   const [simOrders, setSimOrders] = useState<Record<string, { curves: number; variants: Record<string, number>; variantsNotes?: string; units?: number }>>({});
@@ -440,12 +454,6 @@ export default function App() {
   // Select product and automatically commit/save state locally without asking
   const handleSelectProduct = (id: string) => {
     if (!id) return;
-    // Force immediate local storage and IndexedDB save
-    safeStorage.setItem("catalog_products", JSON.stringify(products));
-    safeStorage.setItem("catalog_settings", JSON.stringify(settings));
-    idbSet("catalog_products_idb", products);
-    idbSet("catalog_settings_idb", settings);
-
     // Switch active product
     setActiveProductId(id);
 
@@ -455,9 +463,6 @@ export default function App() {
       setSimPageIndex(pIdx);
     }
 
-    // Trigger auto-saved feedback badge
-    setAutoSaved(true);
-    setTimeout(() => setAutoSaved(false), 1500);
   };
 
   // --- AI Description Optimizer State & Function ---
@@ -496,16 +501,9 @@ export default function App() {
 
       if (data.improvedText && typeof data.improvedText === "string" && data.improvedText.trim().length >= 5) {
         const cleanedText = data.improvedText.trim();
-        let nextProducts: Product[] = [];
-
-        setProducts((prev) => {
-          nextProducts = prev.map((p) => (p.id === targetProductId ? { ...p, description: cleanedText } : p));
-          return nextProducts;
-        });
-
-        // Immediately auto-save to local storage and IndexedDB
-        safeStorage.setItem("catalog_products", JSON.stringify(nextProducts));
-        idbSet("catalog_products_idb", nextProducts);
+        setProducts((prev) => prev.map((p) =>
+          p.id === targetProductId ? { ...p, description: cleanedText } : p
+        ));
       } else {
         throw new Error("La descripción generada por la IA fue insuficiente. Se ha mantenido tu descripción original para proteger tus datos.");
       }
@@ -1223,6 +1221,8 @@ export default function App() {
     );
   };
 
+  if (!storageReady) return <div className="p-8">Cargando catálogo guardado...</div>;
+
   return (
     <div id="main-root" className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       
@@ -1263,7 +1263,7 @@ export default function App() {
             <div className="text-right hidden sm:block">
               <span className="inline-flex items-center text-xs text-slate-500 font-medium gap-1.5 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-full">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                {autoSaved ? "Autoguardado" : "Cambios al día"}
+                {saveStatus === "saved" ? "Cambios guardados" : saveStatus === "error" ? "No se pudo guardar: exportá una copia" : "Guardando..."}
               </span>
             </div>
 

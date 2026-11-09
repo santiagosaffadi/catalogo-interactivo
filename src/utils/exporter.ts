@@ -1,6 +1,8 @@
 import { Product, CatalogSettings } from "../types";
 import { extractYouTubeId } from "./youtube";
 
+const escapeHtml = (value: unknown): string => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]!));
+
 export const generateInteractiveCatalogHtml = (
   products: Product[],
   settings: CatalogSettings
@@ -84,12 +86,12 @@ export const generateInteractiveCatalogHtml = (
                 </span>
               ` : ''}
             </div>
-            <h2 class="product-title">${title}</h2>
+            <h2 class="product-title">${escapeHtml(title)}</h2>
           </div>
 
           <!-- Main Image Display -->
           <div class="image-container">
-            <img id="main-img-${product.id}" src="${firstImg}" class="product-image" alt="${title}" />
+            <img id="main-img-${product.id}" src="${firstImg}" class="product-image" alt="${escapeHtml(title)}" />
           </div>
 
           <!-- Variant Carousel -->
@@ -97,7 +99,7 @@ export const generateInteractiveCatalogHtml = (
 
           <!-- Description -->
           <div class="description-container">
-            <p class="product-description">${description}</p>
+            <p class="product-description">${escapeHtml(description)}</p>
           </div>
 
           <!-- Sizes & Colors Specification -->
@@ -106,12 +108,12 @@ export const generateInteractiveCatalogHtml = (
             ${product.sizes ? `
             <div class="spec-row">
               <span class="spec-label">Talles Disponibles</span>
-              <span class="spec-value">${product.sizes}</span>
+              <span class="spec-value">${escapeHtml(product.sizes)}</span>
             </div>` : ''}
             ${product.colors ? `
             <div class="spec-row">
               <span class="spec-label">Colores Disponibles</span>
-              <span class="spec-value">${product.colors}</span>
+              <span class="spec-value">${escapeHtml(product.colors)}</span>
             </div>` : ''}
           </div>` : ''}
         </div>
@@ -121,11 +123,11 @@ export const generateInteractiveCatalogHtml = (
           <div class="price-grid">
             <div class="price-card">
               <span class="price-label">Precio Minorista</span>
-              <span class="price-value">${settings.currency || '$'}${retailPrice.toLocaleString('es-AR')}</span>
+              <span class="price-value">${escapeHtml(settings.currency || '$')}${retailPrice.toLocaleString('es-AR')}</span>
             </div>
             <div class="price-card wholesale">
               <span class="price-label">Precio Mayorista</span>
-              <span class="price-value">${settings.currency || '$'}${wholesalePrice.toLocaleString('es-AR')}</span>
+              <span class="price-value">${escapeHtml(settings.currency || '$')}${wholesalePrice.toLocaleString('es-AR')}</span>
             </div>
           </div>
         </div>
@@ -161,11 +163,11 @@ export const generateInteractiveCatalogHtml = (
           <div class="variants-qty-list">
             ${colorsList.map((color, j) => `
               <div class="order-row" style="margin-top: 4px;">
-                <span class="variant-color-name">${color}</span>
+                <span class="variant-color-name">${escapeHtml(color)}</span>
                 <div class="quantity-picker">
-                  <button class="qty-btn" type="button" onclick="window.updateVariantQty('${product.id}', '${color.replace(/'/g, "\\'")}', ${j}, -1)">-</button>
+                  <button class="qty-btn" type="button" onclick="window.updateVariantQty('${product.id}', '${escapeHtml(color.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r/g, '\\r').replace(/\n/g, '\\n'))}', ${j}, -1)">-</button>
                   <span id="variant-qty-${product.id}-${j}" class="qty-display" style="font-size: 11px; white-space: nowrap; font-weight: 700; color: #0f172a; min-width: 44px; text-align: center;">0 curvas</span>
-                  <button class="qty-btn" type="button" onclick="window.updateVariantQty('${product.id}', '${color.replace(/'/g, "\\'")}', ${j}, 1)">+</button>
+                  <button class="qty-btn" type="button" onclick="window.updateVariantQty('${product.id}', '${escapeHtml(color.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r/g, '\\r').replace(/\n/g, '\\n'))}', ${j}, 1)">+</button>
                 </div>
               </div>
             `).join('')}
@@ -192,7 +194,7 @@ export const generateInteractiveCatalogHtml = (
           
           <div class="page-order-subtotal">
             <span>Prendas añadidas: <strong id="page-total-items-${product.id}">0</strong></span>
-            <span>Subtotal Mayorista: <strong id="page-subtotal-price-${product.id}">${settings.currency || '$'}0</strong></span>
+            <span>Subtotal Mayorista: <strong id="page-subtotal-price-${product.id}">${escapeHtml(settings.currency || '$')}0</strong></span>
           </div>
 
           <!-- Direct Ver Carrito Button -->
@@ -217,12 +219,12 @@ export const generateInteractiveCatalogHtml = (
     return `
       <div class="grid-item" onclick="window.selectProductFromGrid(${hasCover ? i + 1 : i})">
         <div class="grid-item-image-wrapper">
-          <img src="${firstImg}" alt="${product.title || 'Producto'}" />
+          <img src="${firstImg}" alt="${escapeHtml(product.title || 'Producto')}" />
         </div>
         <div class="grid-item-info">
-          <div class="grid-item-title">${product.title || 'Producto'}</div>
+          <div class="grid-item-title">${escapeHtml(product.title || 'Producto')}</div>
           <div class="grid-item-price-row">
-            <span class="grid-item-price">${settings.currency || '$'}${wholesalePrice.toLocaleString('es-AR')}</span>
+            <span class="grid-item-price">${escapeHtml(settings.currency || '$')}${wholesalePrice.toLocaleString('es-AR')}</span>
             <span class="grid-item-badge" ${product.isExistingInStore ? 'style="background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;"' : ''}>${product.isExistingInStore ? 'Tienda Online' : 'Mayorista'}</span>
           </div>
         </div>
@@ -343,7 +345,7 @@ export const generateInteractiveCatalogHtml = (
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>${settings.storeName} - Catálogo Interactivo</title>
+  <title>${escapeHtml(settings.storeName)} - Catálogo Interactivo</title>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

@@ -170,8 +170,9 @@ export async function idbSet(key: string, value: any): Promise<boolean> {
       const tx = db.transaction(STORE_NAME, "readwrite");
       const store = tx.objectStore(STORE_NAME);
       const req = store.put(value, key);
-      req.onsuccess = () => resolve(true);
-      req.onerror = () => resolve(false);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+      tx.onabort = () => resolve(false);
     });
   } catch {
     return false;
