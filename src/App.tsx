@@ -222,6 +222,8 @@ export default function App() {
       if (storedSettings && typeof storedSettings === "object") {
         setSettings(prev => ({ ...prev, ...storedSettings }));
       }
+      const restoredSettings = storedSettings && typeof storedSettings === "object" ? storedSettings : settings;
+      setSimPageIndex((restoredSettings.coverType ?? (restoredSettings.enableCoverVideo === false ? "none" : "video")) === "none" ? 0 : -1);
       setStorageReady(true);
     })();
     return () => { cancelled = true; };
@@ -927,6 +929,7 @@ export default function App() {
             enableCart: typeof importedSettings.enableCart === "boolean" ? importedSettings.enableCart : settings.enableCart,
             contactEmail: importedSettings.contactEmail || settings.contactEmail,
             instagramUser: importedSettings.instagramUser || settings.instagramUser,
+            coverType: ["video", "christmas", "none"].includes(importedSettings.coverType) ? importedSettings.coverType : (importedSettings.enableCoverVideo === false ? "none" : "video"),
             enableCoverVideo: typeof importedSettings.enableCoverVideo === "boolean" ? importedSettings.enableCoverVideo : settings.enableCoverVideo,
             coverVideoUrl: importedSettings.coverVideoUrl || settings.coverVideoUrl,
             coverPosterUrl: importedSettings.coverPosterUrl || settings.coverPosterUrl,
@@ -942,10 +945,8 @@ export default function App() {
         }
         
         // Reset simulator page index to cover
-        const coverActive = importedSettings && typeof importedSettings.enableCoverVideo === "boolean" 
-          ? importedSettings.enableCoverVideo 
-          : settings.enableCoverVideo;
-        setSimPageIndex(coverActive !== false ? -1 : 0);
+        const importedCoverType = importedSettings?.coverType ?? (importedSettings?.enableCoverVideo === false ? "none" : "video");
+        setSimPageIndex(importedCoverType === "none" ? 0 : -1);
         
         alert("¡Catálogo importado con éxito!");
       }
@@ -967,7 +968,8 @@ export default function App() {
     ? simActiveImages[currentSimProduct.id] || 0
     : 0;
 
-  const hasSimCover = settings.enableCoverVideo !== false;
+  const coverType = settings.coverType ?? (settings.enableCoverVideo === false ? "none" : "video");
+  const hasSimCover = coverType !== "none";
   const minSimIndex = hasSimCover ? -1 : 0;
 
   const handleSimNextPage = () => {
@@ -1020,6 +1022,18 @@ export default function App() {
 
   // --- Reusable Cover Page Renderer for Simulator and Desktop Modal ---
   const renderCoverPage = (isDesktopModal = false) => {
+    if (coverType === "christmas") {
+      return (
+        <div className={isDesktopModal ? "w-full max-w-[460px] h-[82vh] rounded-3xl overflow-hidden shadow-2xl relative my-auto flex items-center justify-center text-center" : "flex-1 w-full h-full relative overflow-hidden flex items-center justify-center text-center"} style={{ background: `#fff url(${christmasCover}) center / cover no-repeat` }}>
+          <div className="px-6 -translate-y-8 text-[#a92e38]">
+            <p className="text-[10px] font-bold tracking-widest">✦ NOS PREPARAMOS PARA LAS FIESTAS ✦</p>
+            <h2 className="font-serif font-bold text-4xl my-4 leading-tight">Cápsula<br />Navideña</h2>
+            <p className="text-sm mb-5">Una colección para vivir momentos mágicos</p>
+            <button type="button" onClick={() => setSimPageIndex(0)} className="rounded-full px-6 py-3 bg-[#a92e38] text-white font-bold text-sm">Ver colección →</button>
+          </div>
+        </div>
+      );
+    }
     const rawUrl = (settings.coverVideoUrl || "").trim();
     const youtubeId = extractYouTubeId(rawUrl);
     const posterUrl = youtubeId ? getYouTubeThumbnailUrl(youtubeId) : (settings.coverPosterUrl || (products[0]?.images[0] || ""));
@@ -1388,30 +1402,19 @@ export default function App() {
 
           {/* Portada con Video (Primera Página al abrir el catálogo) */}
           <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/60">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                <Video className="w-3.5 h-3.5 text-blue-600" /> Portada con Video (1ª Página)
-              </h2>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.enableCoverVideo !== false}
-                  onChange={(e) => {
-                    const enabled = e.target.checked;
-                    setSettings({ ...settings, enableCoverVideo: enabled });
-                    if (enabled) {
-                      setSimPageIndex(-1);
-                    } else if (simPageIndex === -1) {
-                      setSimPageIndex(0);
-                    }
-                  }}
-                  className="sr-only peer"
-                />
-                <div className="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-            </div>
+            <label htmlFor="cover-type" className="text-xs font-extrabold text-slate-700 uppercase tracking-wider block mb-2">Portada del catálogo (1ª página)</label>
+            <select id="cover-type" value={coverType} onChange={(e) => {
+              const next = e.target.value as "video" | "christmas" | "none";
+              setIsSimCoverPlaying(false);
+              setSettings({ ...settings, coverType: next, enableCoverVideo: next !== "none" });
+              setSimPageIndex(next === "none" ? 0 : -1);
+            }} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-semibold mb-3">
+              <option value="video">Portada con video</option>
+              <option value="christmas">Portada navideña</option>
+              <option value="none">Sin portada</option>
+            </select>
 
-            {settings.enableCoverVideo !== false ? (
+            {coverType === "video" ? (
               <div className="space-y-3">
                 {/* YouTube Shorts optimized notification */}
                 <div className="bg-red-50/70 border border-red-200/60 rounded-xl p-2.5 text-[11px] text-red-900 leading-snug">
@@ -1496,10 +1499,10 @@ export default function App() {
                   <span>{simPageIndex === -1 ? "Viendo Portada en Simulador" : "Previsualizar Portada"}</span>
                 </button>
               </div>
+            ) : coverType === "christmas" ? (
+              <button type="button" onClick={() => setSimPageIndex(-1)} className="w-full py-2 px-3 rounded-xl bg-red-50 text-red-800 text-xs font-bold">Ver portada navideña</button>
             ) : (
-              <p className="text-[11px] text-slate-400">
-                La portada con video está desactivada. El catálogo se abrirá directamente en el primer producto.
-              </p>
+              <p className="text-[11px] text-slate-500">El catálogo se abrirá directamente en los productos.</p>
             )}
           </div>
 
@@ -2237,7 +2240,7 @@ export default function App() {
 
               {/* Quick page switcher tabs */}
               <div className="flex items-center bg-white p-0.5 rounded-xl border border-slate-200 text-xs shadow-2xs">
-                {settings.enableCoverVideo !== false && (
+                {hasSimCover && (
                   <button
                     onClick={() => setSimPageIndex(-1)}
                     className={`px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
@@ -2687,7 +2690,7 @@ export default function App() {
                       })()}
                     </div>
                   </div>
-                ) : simPageIndex === -1 && settings.enableCoverVideo !== false ? (
+                ) : simPageIndex === -1 && hasSimCover ? (
                   renderCoverPage(false)
                 ) : currentSimProduct ? (
                   // PRODUCT SLIDE IN SIMULATOR
@@ -3127,7 +3130,7 @@ export default function App() {
                     })}
                   </div>
                 </div>
-              ) : simPageIndex === -1 && settings.enableCoverVideo !== false ? (
+              ) : simPageIndex === -1 && hasSimCover ? (
                 renderCoverPage(true)
               ) : currentSimProduct ? (
                 <div className="w-full max-w-[1180px] bg-white rounded-2xl shadow-lg border border-slate-200 p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 my-auto">

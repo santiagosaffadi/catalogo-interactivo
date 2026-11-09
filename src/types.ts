@@ -21,6 +21,7 @@ export interface CatalogSettings {
   contactEmail: string;
   instagramUser: string;
   // Portada con Video (Primera Página)
+  coverType?: "video" | "christmas" | "none";
   enableCoverVideo?: boolean;
   coverVideoUrl?: string;
   coverPosterUrl?: string;

@@ -11,7 +11,8 @@ export const generateInteractiveCatalogHtml = (
   const productsJson = JSON.stringify(products).replace(/<\/script>/g, '<\\/script>');
   const settingsJson = JSON.stringify(settings).replace(/<\/script>/g, '<\\/script>');
 
-  const hasCover = settings.enableCoverVideo !== false;
+  const coverType = settings.coverType ?? (settings.enableCoverVideo === false ? "none" : "video");
+  const hasCover = coverType !== "none";
   const rawCoverVideoUrl = (settings.coverVideoUrl || "").trim();
   const youtubeId = extractYouTubeId(rawCoverVideoUrl);
   const coverTitle = settings.coverTitle || "Colección Exclusiva";
@@ -20,7 +21,7 @@ export const generateInteractiveCatalogHtml = (
   const defaultPoster = products[0] && products[0].images && products[0].images[0] ? products[0].images[0] : "";
   const coverPoster = youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : (settings.coverPosterUrl || defaultPoster);
 
-  const groupStarts = products.map((p, i) => !!p.isChristmasCapsule && (i === 0 || !products[i - 1].isChristmasCapsule));
+  const groupStarts = products.map((p, i) => !!p.isChristmasCapsule && (i === 0 ? coverType !== "christmas" : !products[i - 1].isChristmasCapsule));
   const productSlideIndex = (i: number) => (hasCover ? 1 : 0) + i + groupStarts.slice(0, i + 1).filter(Boolean).length;
   const summaryIndex = (hasCover ? 1 : 0) + products.length + groupStarts.filter(Boolean).length;
 
@@ -240,7 +241,7 @@ export const generateInteractiveCatalogHtml = (
   }).join('');
 
   // Portada Slide con Video vertical (Primera página)
-  const coverSlideHtml = hasCover ? `
+  const coverSlideHtml = coverType === "christmas" ? `<div class="slide christmas-cover" id="slide-0"><div class="christmas-cover-content"><span>✦ NOS PREPARAMOS PARA LAS FIESTAS ✦</span><h2>Cápsula<br>Navideña</h2><p>Una colección para vivir momentos mágicos</p><button type="button" onclick="window.goToSlide(1)">Ver catálogo →</button></div></div>` : coverType === "video" ? `
     <div class="slide cover-slide" id="slide-0">
       <div class="cover-media-container" id="coverMediaContainer">
         ${youtubeId ? `
