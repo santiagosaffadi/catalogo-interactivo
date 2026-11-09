@@ -181,6 +181,10 @@ export default function App() {
   const [saveStatus, setSaveStatus] = useState<"loading" | "saving" | "saved" | "error">("loading");
   const [storageReady, setStorageReady] = useState(false);
   const saveQueue = useRef(Promise.resolve());
+  const [productSearch, setProductSearch] = useState("");
+  const normalizeSearch = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const matchesProduct = (p: Product) => normalizeSearch([p.title, p.description, p.colors, p.sizes].filter(Boolean).join(" ")).includes(normalizeSearch(productSearch));
+  const matchingCount = products.filter(matchesProduct).length;
   const [sidebarViewMode, setSidebarViewMode] = useState<"list" | "grid">("list");
   const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
   
@@ -1551,10 +1555,15 @@ export default function App() {
               </span>
             </button>
 
+            <label htmlFor="product-search" className="text-xs font-semibold text-slate-600 mb-1">Buscar prendas</label>
+            <input id="product-search" type="search" value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Nombre, color o talle" className="w-full mb-2 px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            {productSearch && <p className="text-xs text-slate-500 mb-2" role="status">{matchingCount === 0 ? "No encontramos prendas. Probá con otra búsqueda." : `${matchingCount} de ${products.length} prendas`}</p>}
+
             {/* Product navigation cards (List or Grid/Mosaic Mode) */}
             {sidebarViewMode === "list" ? (
               <div className="space-y-1.5 overflow-y-auto flex-1 max-h-[380px] no-scrollbar pr-1">
                 {products.map((p, idx) => {
+                  if (!matchesProduct(p)) return null;
                   const isActive = p.id === activeProductId;
                   return (
                     <div
@@ -1637,6 +1646,7 @@ export default function App() {
               /* Inline Mosaic Grid in Sidebar */
               <div className="grid grid-cols-2 gap-2 overflow-y-auto flex-1 max-h-[380px] no-scrollbar pr-1">
                 {products.map((p, idx) => {
+                  if (!matchesProduct(p)) return null;
                   const isActive = p.id === activeProductId;
                   return (
                     <div

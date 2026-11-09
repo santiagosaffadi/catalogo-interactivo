@@ -217,7 +217,7 @@ export const generateInteractiveCatalogHtml = (
     const wholesalePrice = Math.round(retailPrice / 2);
     const firstImg = product.images && product.images.length > 0 ? product.images[0] : '';
     return `
-      <div class="grid-item" onclick="window.selectProductFromGrid(${hasCover ? i + 1 : i})">
+      <button type="button" class="grid-item" onclick="window.selectProductFromGrid(${hasCover ? i + 1 : i})">
         <div class="grid-item-image-wrapper">
           <img src="${firstImg}" alt="${escapeHtml(product.title || 'Producto')}" />
         </div>
@@ -228,7 +228,7 @@ export const generateInteractiveCatalogHtml = (
             <span class="grid-item-badge" ${product.isExistingInStore ? 'style="background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;"' : ''}>${product.isExistingInStore ? 'Tienda Online' : 'Mayorista'}</span>
           </div>
         </div>
-      </div>
+      </button>
     `;
   }).join('');
 
@@ -1718,7 +1718,13 @@ export const generateInteractiveCatalogHtml = (
         gap: 16px;
       }
     }
+    .grid-search { margin: 12px 12px 0; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; }
+    .grid-search:focus-visible, .grid-item:focus-visible { outline: 3px solid #60a5fa; outline-offset: 2px; }
+    .grid-search-status { margin: 8px 14px 0; font-size: 12px; color: #475569; }
+    .grid-item[hidden] { display: none; }
     .grid-item {
+      text-align: left;
+      font: inherit;
       background-color: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 12px;
@@ -1823,6 +1829,8 @@ export const generateInteractiveCatalogHtml = (
           </svg>
         </button>
       </div>
+      <input id="gridSearch" class="grid-search" type="search" placeholder="Buscar por nombre, color o talle" aria-label="Buscar productos" oninput="window.filterGridProducts(this.value)" />
+      <p id="gridSearchStatus" class="grid-search-status" role="status" aria-live="polite"></p>
       <div class="grid-view-content">
         <div class="products-grid">
           ${gridItemsHtml}
@@ -2605,6 +2613,22 @@ export const generateInteractiveCatalogHtml = (
         }
       });
     }
+
+    window.filterGridProducts = function(query) {
+      var normalize = function(value) { return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); };
+      var term = normalize(query);
+      var cards = document.querySelectorAll('.products-grid .grid-item');
+      var count = 0;
+      cards.forEach(function(card, index) {
+        var product = products[index] || {};
+        var searchable = [product.title, product.description, product.colors, product.sizes].join(' ');
+        var matches = normalize(searchable).includes(term);
+        card.hidden = !matches;
+        if (matches) count++;
+      });
+      var status = document.getElementById('gridSearchStatus');
+      if (status) status.textContent = !term ? '' : count ? count + ' de ' + products.length + ' productos' : 'No encontramos productos. Probá con otra búsqueda.';
+    };
 
     window.toggleGridView = function(event) {
       if (event) {
