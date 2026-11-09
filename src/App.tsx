@@ -2421,7 +2421,7 @@ export default function App() {
                   <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar p-3.5 justify-between">
                     <div className="space-y-4">
                       {/* Summary page header */}
-                      <div className="text-center">
+                      <div className={coverType === "christmas" ? "text-center rounded-xl border-t-[3px] border-[#dba73c] bg-gradient-to-b from-[#fff8f4] to-white p-2" : "text-center"}>
                         <span
                           className={`inline-block px-2 py-0.5 rounded-full font-bold uppercase tracking-wider mb-1 ${
                             previewDevice === "desktop" ? "text-[10px]" : "text-[8.5px]"
@@ -2438,6 +2438,7 @@ export default function App() {
                         }`}>
                           Resumen de tu Pedido
                         </h4>
+                        {coverType === "christmas" && <ChristmasDetail />}
                       </div>
 
                       {/* Summary Calculations */}
@@ -2677,16 +2678,18 @@ export default function App() {
                               <button
                                 onClick={triggerSimWhatsapp}
                                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11.5px] py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-98"
+                                style={coverType === "christmas" ? { backgroundColor: "#267447" } : undefined}
                               >
                                 <MessageSquare className="w-3.5 h-3.5" />
-                                Mandar Pedido por WhatsApp
+                                Mandar Pedido por WhatsApp {coverType === "christmas" && <span aria-hidden="true" className="text-amber-200">✦</span>}
                               </button>
                               <button
                                 onClick={triggerSimEmail}
                                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11.5px] py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-98"
+                                style={coverType === "christmas" ? { backgroundColor: "#a92e38" } : undefined}
                               >
                                 <Mail className="w-3.5 h-3.5" />
-                                Mandar Pedido por Email
+                                Mandar Pedido por Email {coverType === "christmas" && <span aria-hidden="true" className="text-amber-200">✦</span>}
                               </button>
                             </div>
                           </div>
@@ -2982,10 +2985,11 @@ export default function App() {
                                 type="button"
                                 onClick={() => setSimPageIndex(products.length)}
                                 className="w-full mt-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] py-2 px-3 rounded-lg flex items-center justify-center space-x-1.5 transition-all shadow-xs active:scale-98 cursor-pointer"
-                                style={{ backgroundColor: settings.themeColor }}
+                                style={{ backgroundColor: coverType === "christmas" ? "#a92e38" : settings.themeColor }}
                               >
                                 <ShoppingBag className="w-3.5 h-3.5" />
                                 <span>Ver Carrito</span>
+                                {coverType === "christmas" && <span aria-hidden="true" className="text-amber-200">✦</span>}
                               </button>
                             </div>
                           )}

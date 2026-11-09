@@ -1822,9 +1822,19 @@ export const generateInteractiveCatalogHtml = (
       border-radius: 4px;
       border: 1px solid #bbf7d0;
     }
+    /* Festive accents apply to shared controls only when the Christmas cover is selected. */
+    .christmas-theme .btn-go-to-cart { background: #a92e38; }
+    .christmas-theme .btn-go-to-cart::after { content: '✦'; color: #ffdf88; font-size: 10px; margin-left: 3px; }
+    .christmas-theme .summary-slide .product-header { border-top: 3px solid #dba73c; border-radius: 12px; background: linear-gradient(180deg, #fff8f4, #fff); padding: 8px; }
+    .christmas-theme .summary-totals-card { background: #f4faf3; border-color: #a8c9a2; }
+    .christmas-theme .btn-submit-order.whatsapp { background-color: #267447; }
+    .christmas-theme .btn-submit-order.whatsapp:hover { background-color: #1e5c39; }
+    .christmas-theme .btn-submit-order.email { background-color: #a92e38; }
+    .christmas-theme .btn-submit-order.email:hover { background-color: #86222b; }
+    .christmas-theme .btn-submit-order::after { content: '✦'; color: #ffdf88; font-size: 10px; margin-left: 3px; }
   </style>
 </head>
-<body>
+<body${coverType === "christmas" ? ' class="christmas-theme"' : ''}>
 
   <!-- Slider Wrapper -->
   <main class="catalog-container">
@@ -1865,13 +1875,14 @@ export const generateInteractiveCatalogHtml = (
         ${sliderContent}
         
         <!-- SUMMARY SLIDE -->
-        <div class="slide" id="slide-${summaryIndex}">
+        <div class="slide summary-slide" id="slide-${summaryIndex}">
           <div class="slide-content" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
             <div class="product-header">
               <span class="product-badge" style="background-color: #f1f5f9; color: #475569;">
                 Paso Final
               </span>
               <h2 class="product-title">Resumen de tu Pedido</h2>
+              ${coverType === "christmas" ? `<div class="christmas-detail" aria-hidden="true"><span></span><b>✦</b><i>●</i><b>✦</b><span></span></div>` : ''}
             </div>
             
             <div class="summary-container" style="flex: 1; display: flex; flex-direction: column; min-height: 0; margin-top: 8px;">
