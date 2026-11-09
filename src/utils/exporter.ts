@@ -21,17 +21,14 @@ export const generateInteractiveCatalogHtml = (
   const defaultPoster = products[0] && products[0].images && products[0].images[0] ? products[0].images[0] : "";
   const coverPoster = youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : (settings.coverPosterUrl || defaultPoster);
 
-  const groupStarts = products.map((p, i) => coverType === "christmas" && !!p.isChristmasCapsule && i > 0 && !products[i - 1].isChristmasCapsule);
   const pages = (settings.editorialPages || []).filter(page => page && typeof page.image === "string" && /^data:image\/(jpeg|png|webp);base64,/i.test(page.image));
   const productIds = new Set(products.map(p => p.id));
   const pagesBefore = (id: string) => pages.filter(page => page.beforeProductId === id);
   const endPages = products.length ? pages.filter(page => !page.beforeProductId || !productIds.has(page.beforeProductId)) : [];
   let nextSlide = hasCover ? 1 : 0;
-  const groupSlideIndices: number[] = [];
   const photoSlideIndices: number[][] = [];
   const productSlideIndices: number[] = [];
   products.forEach((product, i) => {
-    groupSlideIndices[i] = groupStarts[i] ? nextSlide++ : -1;
     photoSlideIndices[i] = pagesBefore(product.id).map(() => nextSlide++);
     productSlideIndices[i] = nextSlide++;
   });
@@ -93,7 +90,6 @@ export const generateInteractiveCatalogHtml = (
     }
 
     return `
-      ${groupStarts[i] ? `<div class="slide christmas-cover" id="slide-${groupSlideIndices[i]}"><div class="christmas-cover-content"><span>✦ NOS PREPARAMOS PARA LAS FIESTAS ✦</span><h2>Cápsula<br>Navideña</h2><p>Una colección para vivir momentos mágicos</p><button type="button" onclick="window.goToSlide(${groupSlideIndices[i] + 1})">Ver colección →</button></div></div>` : ''}
       ${pagesBefore(product.id).map((page, pageIndex) => renderPhotoSlide(page.image, page.fit, photoSlideIndices[i][pageIndex])).join('')}
       <div class="slide product-slide ${coverType === "christmas" && product.isChristmasCapsule ? 'christmas-product' : ''}" id="slide-${productSlideIndex(i)}">
         <div class="slide-content">

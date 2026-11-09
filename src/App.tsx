@@ -1858,7 +1858,7 @@ export default function App() {
                     <input type="checkbox" checked={!!activeProduct.isChristmasCapsule} onChange={(e) => updateActiveProduct("isChristmasCapsule", e.target.checked)} className="w-4 h-4 accent-emerald-700" />
                     ✦ Cápsula Navideña
                   </label>
-                  <p className="text-xs text-emerald-800 mt-1">Marcá las prendas de la colección y ordenalas juntas. La portada aparecerá antes de cada grupo navideño.</p>
+                  <p className="text-xs text-emerald-800 mt-1">Marcá las prendas de la colección para destacar sus detalles navideños. La portada se muestra al inicio del catálogo.</p>
                 </div>
               </div>}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-2">
