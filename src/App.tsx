@@ -2782,7 +2782,7 @@ export default function App() {
                     <div className="space-y-3">
                       
                       {/* Product page header indicator */}
-                      <div className={currentSimProduct.isChristmasCapsule ? "text-center rounded-xl border-t-[3px] border-[#dba73c] bg-gradient-to-b from-[#fff8f4] to-white px-2 pt-2 pb-1.5" : "text-center"}>
+                      <div className={(coverType === "christmas" && currentSimProduct.isChristmasCapsule) ? "text-center rounded-xl border-t-[3px] border-[#dba73c] bg-gradient-to-b from-[#fff8f4] to-white px-2 pt-2 pb-1.5" : "text-center"}>
                         <div className="flex items-center justify-center gap-1.5 mb-1 flex-wrap">
                           <span
                             className={`inline-block px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
@@ -2795,7 +2795,7 @@ export default function App() {
                           >
                             Producto {simPageIndex + 1} de {products.length}
                           </span>
-                          {currentSimProduct.isChristmasCapsule && <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-amber-300 text-[8px] font-bold">✦ Cápsula Navideña ✦</span>}
+                          {(coverType === "christmas" && currentSimProduct.isChristmasCapsule) && <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-amber-300 text-[8px] font-bold">✦ Cápsula Navideña ✦</span>}
                           {currentSimProduct.isExistingInStore && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[8px] font-extrabold uppercase tracking-wide border border-blue-200">
                               <Globe className="w-2.5 h-2.5" />
@@ -2808,7 +2808,7 @@ export default function App() {
                         }`}>
                           {currentSimProduct.title || "Sin título"}
                         </h4>
-                        {currentSimProduct.isChristmasCapsule && <ChristmasDetail />}
+                        {(coverType === "christmas" && currentSimProduct.isChristmasCapsule) && <ChristmasDetail />}
                       </div>
 
                       {/* Main Image Screen */}
@@ -3245,11 +3245,11 @@ export default function App() {
                       </button>
                     </div>
 
-                    {currentSimProduct.isChristmasCapsule && <span className="self-start px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-amber-300 text-xs font-bold">✦ Cápsula Navideña ✦</span>}
+                    {(coverType === "christmas" && currentSimProduct.isChristmasCapsule) && <span className="self-start px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-amber-300 text-xs font-bold">✦ Cápsula Navideña ✦</span>}
                     <h2 className="text-2xl font-black text-slate-900 font-display">
                       {currentSimProduct.title || "Sin título"}
                     </h2>
-                    {currentSimProduct.isChristmasCapsule && <ChristmasDetail />}
+                    {(coverType === "christmas" && currentSimProduct.isChristmasCapsule) && <ChristmasDetail />}
 
                     {/* Huge Product Image Container */}
                     <div className="relative aspect-square w-full max-h-[500px] min-h-[320px] mx-auto rounded-2xl overflow-hidden bg-white border border-slate-200/80 shadow-xs flex items-center justify-center p-3">

@@ -21,7 +21,7 @@ export const generateInteractiveCatalogHtml = (
   const defaultPoster = products[0] && products[0].images && products[0].images[0] ? products[0].images[0] : "";
   const coverPoster = youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : (settings.coverPosterUrl || defaultPoster);
 
-  const groupStarts = products.map((p, i) => !!p.isChristmasCapsule && (i === 0 ? coverType !== "christmas" : !products[i - 1].isChristmasCapsule));
+  const groupStarts = products.map((p, i) => coverType === "christmas" && !!p.isChristmasCapsule && i > 0 && !products[i - 1].isChristmasCapsule);
   const pages = (settings.editorialPages || []).filter(page => page && typeof page.image === "string" && /^data:image\/(jpeg|png|webp);base64,/i.test(page.image));
   const productIds = new Set(products.map(p => p.id));
   const pagesBefore = (id: string) => pages.filter(page => page.beforeProductId === id);
@@ -95,7 +95,7 @@ export const generateInteractiveCatalogHtml = (
     return `
       ${groupStarts[i] ? `<div class="slide christmas-cover" id="slide-${groupSlideIndices[i]}"><div class="christmas-cover-content"><span>✦ NOS PREPARAMOS PARA LAS FIESTAS ✦</span><h2>Cápsula<br>Navideña</h2><p>Una colección para vivir momentos mágicos</p><button type="button" onclick="window.goToSlide(${groupSlideIndices[i] + 1})">Ver colección →</button></div></div>` : ''}
       ${pagesBefore(product.id).map((page, pageIndex) => renderPhotoSlide(page.image, page.fit, photoSlideIndices[i][pageIndex])).join('')}
-      <div class="slide product-slide ${product.isChristmasCapsule ? 'christmas-product' : ''}" id="slide-${productSlideIndex(i)}">
+      <div class="slide product-slide ${coverType === "christmas" && product.isChristmasCapsule ? 'christmas-product' : ''}" id="slide-${productSlideIndex(i)}">
         <div class="slide-content">
           <!-- Title Block -->
           <div class="product-header">
@@ -103,7 +103,7 @@ export const generateInteractiveCatalogHtml = (
               <span class="product-badge">
                 Producto ${i + 1} de ${products.length}
               </span>
-              ${product.isChristmasCapsule ? `<span class="christmas-badge">✦ Cápsula Navideña ✦</span>` : ''}
+              ${coverType === "christmas" && product.isChristmasCapsule ? `<span class="christmas-badge">✦ Cápsula Navideña ✦</span>` : ''}
               ${product.isExistingInStore ? `
                 <span class="product-badge" style="background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
                   Tienda Online
@@ -111,7 +111,7 @@ export const generateInteractiveCatalogHtml = (
               ` : ''}
             </div>
             <h2 class="product-title">${escapeHtml(title)}</h2>
-            ${product.isChristmasCapsule ? `<div class="christmas-detail" aria-hidden="true"><span></span><b>✦</b><i>●</i><b>✦</b><span></span></div>` : ''}
+            ${coverType === "christmas" && product.isChristmasCapsule ? `<div class="christmas-detail" aria-hidden="true"><span></span><b>✦</b><i>●</i><b>✦</b><span></span></div>` : ''}
           </div>
 
           <!-- Main Image Display -->
