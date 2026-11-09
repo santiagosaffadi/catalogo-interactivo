@@ -1388,11 +1388,13 @@ export default function App() {
           
 
 
-          {/* Store Branding Box */}
-          <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/60">
-            <h2 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <Store className="w-3.5 h-3.5 text-slate-500" /> Ajustes del Catálogo
-            </h2>
+          {/* Catalog settings and cover */}
+          <details className="group bg-white rounded-2xl shadow-xs border border-slate-200/60">
+            <summary className="list-none cursor-pointer flex items-center justify-between gap-2 p-4 text-xs font-extrabold text-slate-700 uppercase tracking-wider [&::-webkit-details-marker]:hidden">
+              <span className="flex items-center gap-1.5"><Store className="w-4 h-4 text-slate-500" /> Ajustes del Catálogo</span>
+              <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+            </summary>
+          <div className="px-4 pb-4">
             <div className="space-y-3.5">
               <div>
                 <label className="text-xs font-semibold text-slate-500 block mb-1">Nombre de la Tienda</label>
@@ -1572,8 +1574,14 @@ export default function App() {
             )}
           </div>
 
-          <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/60 space-y-3">
-            <div><h2 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Fotos a pantalla completa</h2><p className="text-xs text-slate-500 mt-1">Elegí dónde mostrar cada foto. Las fotos en una misma posición siguen el orden de esta lista.</p></div>
+          </details>
+
+          <details className="group bg-white rounded-2xl shadow-xs border border-slate-200/60">
+            <summary className="list-none cursor-pointer flex items-center justify-between gap-2 p-4 text-xs font-extrabold text-slate-700 uppercase tracking-wider [&::-webkit-details-marker]:hidden">
+              <span>Fotos a pantalla completa ({(settings.editorialPages || []).length})</span><ChevronDown className="w-4 h-4 shrink-0 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="px-4 pb-4 space-y-3">
+            <p className="text-xs text-slate-500">Elegí dónde mostrar cada foto. Las fotos en una misma posición siguen el orden de esta lista.</p>
             <label className="block text-center py-2 px-3 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold cursor-pointer">{uploadingEditorial ? "Cargando fotos..." : "+ Cargar fotos"}<input type="file" accept="image/*" multiple disabled={uploadingEditorial} className="sr-only" onChange={e => { const files = Array.from(e.currentTarget.files || []) as File[]; e.currentTarget.value = ""; void uploadEditorialPages(files); }} /></label>
             {(settings.editorialPages || []).map((page, index, pages) => (
               <div key={page.id} className="border border-slate-200 rounded-xl p-2 space-y-2">
@@ -1582,15 +1590,16 @@ export default function App() {
                 <label className="block text-xs text-slate-600">Ajuste de imagen<select value={page.fit || "cover"} onChange={e => changeEditorialPage(page.id, { fit: e.target.value as "cover" | "contain" })} className="block w-full mt-1 rounded-lg border border-slate-300 p-1.5 text-xs"><option value="cover">Llenar pantalla (puede recortar)</option><option value="contain">Mostrar foto completa</option></select></label>
               </div>
             ))}
-          </div>
+            </div>
+          </details>
 
           {/* Products Nav Box */}
-          <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/60 flex-1 flex flex-col min-h-[360px]">
-            <div className="flex items-center justify-between mb-2.5">
-              <h2 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                📦 Prendas ({products.length})
-              </h2>
-
+          <details className="group bg-white rounded-2xl shadow-xs border border-slate-200/60">
+            <summary className="list-none cursor-pointer flex items-center justify-between gap-2 p-4 text-xs font-extrabold text-slate-700 uppercase tracking-wider [&::-webkit-details-marker]:hidden">
+              <span>📦 Prendas ({products.length})</span><ChevronDown className="w-4 h-4 shrink-0 transition-transform group-open:rotate-180" />
+            </summary>
+          <div className="px-4 pb-4 flex flex-col">
+            <div className="flex items-center justify-end mb-2.5">
               <div className="flex items-center space-x-1.5">
                 {/* View switcher: List vs Mosaic/Grid in sidebar */}
                 <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200/60">
@@ -1834,6 +1843,7 @@ export default function App() {
               </button>
             </div>
           </div>
+          </details>
         </section>
 
         {/* MIDDLE COLUMN: Active Product Editor Form (lg:col-span-4) */}
