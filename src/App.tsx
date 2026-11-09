@@ -1752,7 +1752,7 @@ export default function App() {
         </section>
 
         {/* MIDDLE COLUMN: Active Product Editor Form (lg:col-span-4) */}
-        <section id="editor-panel" className="lg:col-span-4 flex flex-col space-y-5 lg:overflow-y-auto lg:max-h-[calc(100vh-110px)] h-auto">
+        <section id="editor-panel" className="lg:col-span-5 min-w-0 flex flex-col space-y-5 lg:overflow-y-auto lg:max-h-[calc(100vh-110px)] h-auto">
           {activeProduct ? (
             <div className="bg-white rounded-3xl p-5 md:p-6 shadow-xs border border-slate-200/60 flex-1 space-y-5">
               
@@ -2211,8 +2211,8 @@ export default function App() {
           )}
         </section>
 
-        {/* RIGHT COLUMN: Interactive Smartphone / Device Live Preview (lg:col-span-5) */}
-        <section id="preview-panel" className="lg:col-span-5 flex flex-col space-y-3.5 items-center">
+        {/* RIGHT COLUMN: Interactive Smartphone / Device Live Preview (lg:col-span-4) */}
+        <section id="preview-panel" className="lg:col-span-4 min-w-0 flex flex-col space-y-3.5 items-center">
           
           {/* Header Controls for simulator */}
           <div className="w-full flex items-center justify-between px-2 bg-slate-50 flex-wrap gap-2">
@@ -2303,7 +2303,7 @@ export default function App() {
             onTouchEnd={handleSimTouchEnd}
             className={`transition-all duration-300 bg-slate-800 shadow-2xl overflow-hidden ${
               previewDevice === "mobile"
-                ? "relative w-[340px] h-[640px] rounded-[40px] border-[10px] border-slate-900"
+                ? "relative w-[340px] max-w-full h-[640px] rounded-[40px] border-[10px] border-slate-900"
                 : "relative w-full max-w-[680px] h-[840px] rounded-2xl border-4 border-slate-700"
             } flex flex-col bg-slate-50`}
           >
