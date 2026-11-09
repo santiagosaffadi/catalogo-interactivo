@@ -1024,12 +1024,12 @@ export default function App() {
   const renderCoverPage = (isDesktopModal = false) => {
     if (coverType === "christmas") {
       return (
-        <div className={isDesktopModal ? "w-full max-w-[460px] h-[82vh] rounded-3xl overflow-hidden shadow-2xl relative my-auto flex items-center justify-center text-center" : "flex-1 w-full h-full relative overflow-hidden flex items-center justify-center text-center"} style={{ background: `#fff url(${christmasCover}) center / cover no-repeat` }}>
-          <div className="px-6 -translate-y-8 text-[#a92e38]">
-            <p className="text-[10px] font-bold tracking-widest">✦ NOS PREPARAMOS PARA LAS FIESTAS ✦</p>
-            <h2 className="font-serif font-bold text-4xl my-4 leading-tight">Cápsula<br />Navideña</h2>
-            <p className="text-sm mb-5">Una colección para vivir momentos mágicos</p>
-            <button type="button" onClick={() => setSimPageIndex(0)} className="rounded-full px-6 py-3 bg-[#a92e38] text-white font-bold text-sm">Ver colección →</button>
+        <div className={isDesktopModal ? "w-full max-w-[460px] h-[82vh] rounded-3xl overflow-hidden shadow-2xl relative my-auto flex items-center justify-center text-center" : "flex-1 w-full h-full relative overflow-hidden flex items-center justify-center text-center"} style={{ background: `#fff url(${christmasCover}) center / contain no-repeat` }}>
+          <div className="px-6 -translate-y-14 text-[#a92e38]">
+            <p className="text-[9px] font-bold tracking-widest">✦ NOS PREPARAMOS PARA LAS FIESTAS ✦</p>
+            <h2 className="font-serif font-bold text-3xl my-3 leading-tight">Cápsula<br />Navideña</h2>
+            <p className="text-xs mb-4">Una colección para vivir momentos mágicos</p>
+            <button type="button" onClick={() => setSimPageIndex(0)} className="rounded-full px-5 py-2.5 bg-[#a92e38] text-white font-bold text-xs">Ver colección →</button>
           </div>
         </div>
       );

@@ -1649,12 +1649,12 @@ export const generateInteractiveCatalogHtml = (
       width: 18px;
       height: 18px;
     }
-    .christmas-cover { position: relative; background: #fffdf9 url('${christmasCover}') center / cover no-repeat; color: #a92e38; display: flex; align-items: center; justify-content: center; text-align: center; }
-    .christmas-cover-content { padding: 24px; transform: translateY(-12%); }
-    .christmas-cover-content span { font-size: 11px; letter-spacing: .22em; color: #a92e38; font-weight: 700; }
-    .christmas-cover-content h2 { font-family: Georgia, serif; font-size: clamp(36px, 8vw, 64px); line-height: 1.05; margin: 20px 0; }
-    .christmas-cover-content p { font-size: 14px; margin: 0 auto 24px; max-width: 260px; }
-    .christmas-cover-content button { cursor: pointer; border: 1px solid #a92e38; border-radius: 999px; padding: 12px 24px; background: #a92e38; color: #fff; font-weight: 800; }
+    .christmas-cover { position: relative; background: #fffdf9 url('${christmasCover}') center / contain no-repeat; color: #a92e38; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .christmas-cover-content { padding: 20px; transform: translateY(-28%); }
+    .christmas-cover-content span { font-size: 10px; letter-spacing: .2em; color: #a92e38; font-weight: 700; }
+    .christmas-cover-content h2 { font-family: Georgia, serif; font-size: clamp(30px, 7vw, 52px); line-height: 1.05; margin: 14px 0; }
+    .christmas-cover-content p { font-size: 12px; margin: 0 auto 16px; max-width: 260px; }
+    .christmas-cover-content button { cursor: pointer; border: 1px solid #a92e38; border-radius: 999px; padding: 10px 20px; background: #a92e38; color: #fff; font-weight: 800; }
     .christmas-badge { background: #e7f2e8; color: #245b3e; border: 1px solid #d3b36d; padding: 3px 8px; border-radius: 999px; font-size: 9px; font-weight: 800; }
     .christmas-product .product-header { border-top: 3px solid #d3b36d; border-radius: 8px; }
     .grid-view-overlay {
