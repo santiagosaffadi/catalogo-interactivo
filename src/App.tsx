@@ -47,7 +47,7 @@ import {
   Film
 } from "lucide-react";
 
-import { Product, CatalogSettings } from "./types";
+import { Product, CatalogSettings, EditorialPage } from "./types";
 import { christmasCover } from "./assets/christmasCover";
 import {
   DEFAULT_PRODUCTS,
@@ -186,6 +186,8 @@ export default function App() {
   const [saveStatus, setSaveStatus] = useState<"loading" | "saving" | "saved" | "error">("loading");
   const [storageReady, setStorageReady] = useState(false);
   const saveQueue = useRef(Promise.resolve());
+  const [editorialPreview, setEditorialPreview] = useState<EditorialPage | null>(null);
+  const [uploadingEditorial, setUploadingEditorial] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const normalizeSearch = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   const matchesProduct = (p: Product) => normalizeSearch([p.title, p.description, p.colors, p.sizes].filter(Boolean).join(" ")).includes(normalizeSearch(productSearch));
@@ -646,6 +648,33 @@ export default function App() {
     }
   };
 
+  const uploadEditorialPages = async (files: File[]) => {
+    if (!files.length) return;
+    setUploadingEditorial(true);
+    try {
+      const selected = Array.from(files).filter(file => file.type.startsWith("image/"));
+      const images = await Promise.all(selected.map(file => compressImage(file, 1600, 0.8)));
+      const added: EditorialPage[] = images.map(image => ({ id: crypto.randomUUID(), image, beforeProductId: "", fit: "cover" }));
+      setSettings(prev => ({ ...prev, editorialPages: [...(prev.editorialPages || []), ...added] }));
+    } catch {
+      alert("No se pudieron cargar las fotos. Intentá nuevamente.");
+    } finally { setUploadingEditorial(false); }
+  };
+
+  const changeEditorialPage = (id: string, change: Partial<EditorialPage>) => {
+    setSettings(prev => ({ ...prev, editorialPages: (prev.editorialPages || []).map(page => page.id === id ? { ...page, ...change } : page) }));
+  };
+  const moveEditorialPage = (id: string, direction: number) => {
+    setSettings(prev => {
+      const pages = [...(prev.editorialPages || [])];
+      const index = pages.findIndex(page => page.id === id);
+      const target = index + direction;
+      if (index < 0 || target < 0 || target >= pages.length) return prev;
+      [pages[index], pages[target]] = [pages[target], pages[index]];
+      return { ...prev, editorialPages: pages };
+    });
+  };
+
   // Handle image upload from file explorer with automatic image compression (800px / 0.65 quality -> ~30-50KB/photo)
   const handleImagesUploaded = async (files: FileList) => {
     if (!activeProduct) return;
@@ -933,6 +962,7 @@ export default function App() {
             enableCart: typeof importedSettings.enableCart === "boolean" ? importedSettings.enableCart : settings.enableCart,
             contactEmail: importedSettings.contactEmail || settings.contactEmail,
             instagramUser: importedSettings.instagramUser || settings.instagramUser,
+            editorialPages: Array.isArray(importedSettings.editorialPages) ? importedSettings.editorialPages.filter((page: any) => page && typeof page.id === "string" && typeof page.image === "string" && /^data:image\/(jpeg|png|webp);base64,/i.test(page.image)).map((page: any) => ({ id: page.id, image: page.image, beforeProductId: typeof page.beforeProductId === "string" ? page.beforeProductId : "", fit: page.fit === "contain" ? "contain" : "cover" })) : [],
             coverType: ["video", "christmas", "none"].includes(importedSettings.coverType) ? importedSettings.coverType : (importedSettings.enableCoverVideo === false ? "none" : "video"),
             enableCoverVideo: typeof importedSettings.enableCoverVideo === "boolean" ? importedSettings.enableCoverVideo : settings.enableCoverVideo,
             coverVideoUrl: importedSettings.coverVideoUrl || settings.coverVideoUrl,
@@ -1508,6 +1538,18 @@ export default function App() {
             ) : (
               <p className="text-[11px] text-slate-500">El catálogo se abrirá directamente en los productos.</p>
             )}
+          </div>
+
+          <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/60 space-y-3">
+            <div><h2 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Fotos a pantalla completa</h2><p className="text-xs text-slate-500 mt-1">Elegí dónde mostrar cada foto. Las fotos en una misma posición siguen el orden de esta lista.</p></div>
+            <label className="block text-center py-2 px-3 rounded-xl bg-blue-50 text-blue-700 text-xs font-bold cursor-pointer">{uploadingEditorial ? "Cargando fotos..." : "+ Cargar fotos"}<input type="file" accept="image/*" multiple disabled={uploadingEditorial} className="sr-only" onChange={e => { const files = Array.from(e.currentTarget.files || []) as File[]; e.currentTarget.value = ""; void uploadEditorialPages(files); }} /></label>
+            {(settings.editorialPages || []).map((page, index, pages) => (
+              <div key={page.id} className="border border-slate-200 rounded-xl p-2 space-y-2">
+                <div className="flex items-center gap-2"><img src={page.image} alt="" className="w-12 h-16 object-cover rounded-lg" /><div className="flex-1 min-w-0"><p className="text-xs font-bold">Foto {index + 1}</p><button type="button" onClick={() => setEditorialPreview(page)} className="text-xs text-blue-700 font-semibold">Ver foto</button></div><button type="button" aria-label={`Subir foto ${index + 1}`} disabled={index === 0} onClick={() => moveEditorialPage(page.id, -1)} className="p-1 disabled:opacity-30">↑</button><button type="button" aria-label={`Bajar foto ${index + 1}`} disabled={index === pages.length - 1} onClick={() => moveEditorialPage(page.id, 1)} className="p-1 disabled:opacity-30">↓</button><button type="button" aria-label={`Quitar foto ${index + 1}`} onClick={() => setSettings(prev => ({ ...prev, editorialPages: (prev.editorialPages || []).filter(item => item.id !== page.id) }))} className="p-1 text-rose-600"><Trash2 className="w-4 h-4" /></button></div>
+                <label className="block text-xs text-slate-600">Ubicación<select value={products.some(p => p.id === page.beforeProductId) ? page.beforeProductId : ""} onChange={e => changeEditorialPage(page.id, { beforeProductId: e.target.value })} className="block w-full mt-1 rounded-lg border border-slate-300 p-1.5 text-xs"><option value="">Después de todas las prendas</option>{products.map((p, i) => <option key={p.id} value={p.id}>Antes de #{i + 1} · {p.title || "Sin título"}</option>)}</select></label>
+                <label className="block text-xs text-slate-600">Ajuste de imagen<select value={page.fit || "cover"} onChange={e => changeEditorialPage(page.id, { fit: e.target.value as "cover" | "contain" })} className="block w-full mt-1 rounded-lg border border-slate-300 p-1.5 text-xs"><option value="cover">Llenar pantalla (puede recortar)</option><option value="contain">Mostrar foto completa</option></select></label>
+              </div>
+            ))}
           </div>
 
           {/* Products Nav Box */}
@@ -2341,6 +2383,7 @@ export default function App() {
               {/* Slider screen simulator */}
               <div className="flex-1 relative overflow-hidden flex flex-col bg-white">
                 
+                {editorialPreview && <div className="absolute inset-0 z-[60] bg-black flex items-center justify-center"><img src={editorialPreview.image} alt="Vista previa de foto a pantalla completa" className="w-full h-full" style={{ objectFit: editorialPreview.fit || "cover" }} /><button type="button" onClick={() => setEditorialPreview(null)} className="absolute top-4 right-4 bg-white text-slate-900 rounded-full px-3 py-2 text-xs font-bold shadow">Cerrar vista</button></div>}
                 {/* Floating Grid Button (Top-Left) */}
                 {simPageIndex < products.length && (
                   <div className="absolute top-3 left-3 z-30">

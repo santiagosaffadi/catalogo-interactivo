@@ -22,8 +22,23 @@ export const generateInteractiveCatalogHtml = (
   const coverPoster = youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : (settings.coverPosterUrl || defaultPoster);
 
   const groupStarts = products.map((p, i) => !!p.isChristmasCapsule && (i === 0 ? coverType !== "christmas" : !products[i - 1].isChristmasCapsule));
-  const productSlideIndex = (i: number) => (hasCover ? 1 : 0) + i + groupStarts.slice(0, i + 1).filter(Boolean).length;
-  const summaryIndex = (hasCover ? 1 : 0) + products.length + groupStarts.filter(Boolean).length;
+  const pages = (settings.editorialPages || []).filter(page => page && typeof page.image === "string" && /^data:image\/(jpeg|png|webp);base64,/i.test(page.image));
+  const productIds = new Set(products.map(p => p.id));
+  const pagesBefore = (id: string) => pages.filter(page => page.beforeProductId === id);
+  const endPages = products.length ? pages.filter(page => !page.beforeProductId || !productIds.has(page.beforeProductId)) : [];
+  let nextSlide = hasCover ? 1 : 0;
+  const groupSlideIndices: number[] = [];
+  const photoSlideIndices: number[][] = [];
+  const productSlideIndices: number[] = [];
+  products.forEach((product, i) => {
+    groupSlideIndices[i] = groupStarts[i] ? nextSlide++ : -1;
+    photoSlideIndices[i] = pagesBefore(product.id).map(() => nextSlide++);
+    productSlideIndices[i] = nextSlide++;
+  });
+  const endPhotoIndices = endPages.map(() => nextSlide++);
+  const productSlideIndex = (i: number) => productSlideIndices[i];
+  const summaryIndex = nextSlide;
+  const renderPhotoSlide = (image: string, fit: string | undefined, index: number) => `<div class="slide editorial-slide" id="slide-${index}"><img src="${escapeHtml(image)}" alt="Foto de presentación del catálogo" style="object-fit:${fit === "contain" ? "contain" : "cover"}" /></div>`;
 
   const slidesHtml = products.map((product, i) => {
     const title = product.title || "Producto";
@@ -78,7 +93,8 @@ export const generateInteractiveCatalogHtml = (
     }
 
     return `
-      ${groupStarts[i] ? `<div class="slide christmas-cover" id="slide-${productSlideIndex(i) - 1}"><div class="christmas-cover-content"><span>✦ NOS PREPARAMOS PARA LAS FIESTAS ✦</span><h2>Cápsula<br>Navideña</h2><p>Una colección para vivir momentos mágicos</p><button type="button" onclick="window.goToSlide(${productSlideIndex(i)})">Ver colección →</button></div></div>` : ''}
+      ${groupStarts[i] ? `<div class="slide christmas-cover" id="slide-${groupSlideIndices[i]}"><div class="christmas-cover-content"><span>✦ NOS PREPARAMOS PARA LAS FIESTAS ✦</span><h2>Cápsula<br>Navideña</h2><p>Una colección para vivir momentos mágicos</p><button type="button" onclick="window.goToSlide(${groupSlideIndices[i] + 1})">Ver colección →</button></div></div>` : ''}
+      ${pagesBefore(product.id).map((page, pageIndex) => renderPhotoSlide(page.image, page.fit, photoSlideIndices[i][pageIndex])).join('')}
       <div class="slide product-slide ${product.isChristmasCapsule ? 'christmas-product' : ''}" id="slide-${productSlideIndex(i)}">
         <div class="slide-content">
           <!-- Title Block -->
@@ -346,7 +362,7 @@ export const generateInteractiveCatalogHtml = (
         <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Este catálogo no contiene productos actualmente.</p>
       </div>`;
   } else {
-    sliderContent = (coverSlideHtml ? coverSlideHtml + '\n' : '') + slidesHtml;
+    sliderContent = (coverSlideHtml ? coverSlideHtml + '\n' : '') + slidesHtml + endPages.map((page, i) => renderPhotoSlide(page.image, page.fit, endPhotoIndices[i])).join('');
   }
 
   return `<!DOCTYPE html>
@@ -1650,6 +1666,8 @@ export const generateInteractiveCatalogHtml = (
       width: 18px;
       height: 18px;
     }
+    .editorial-slide { padding: 0 !important; background: #111; display: flex; align-items: center; justify-content: center; }
+    .editorial-slide img { width: 100%; height: 100%; display: block; }
     .christmas-cover { position: relative; background: #fffdf9 url('${christmasCover}') center / contain no-repeat; color: #a92e38; display: flex; align-items: center; justify-content: center; text-align: center; }
     .christmas-cover-content { padding: 20px; transform: translateY(-28%); }
     .christmas-cover-content span { font-size: 10px; letter-spacing: .2em; color: #a92e38; font-weight: 700; }

@@ -12,7 +12,15 @@ export interface Product {
   externalStoreUrl?: string;
 }
 
+export interface EditorialPage {
+  id: string;
+  image: string;
+  beforeProductId: string; // Empty string places the page after all products.
+  fit?: "cover" | "contain";
+}
+
 export interface CatalogSettings {
+  editorialPages?: EditorialPage[];
   storeName: string;
   whatsappNumber: string;
   currency: string;
