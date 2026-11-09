@@ -175,8 +175,6 @@ export default function App() {
   const [dragOver, setDragOver] = useState(false);
   const [autoSaved, setAutoSaved] = useState(true);
   const [sidebarViewMode, setSidebarViewMode] = useState<"list" | "grid">("list");
-  const [sidebarCapsuleFilter, setSidebarCapsuleFilter] = useState<"all" | "capsule">("all");
-  const [simGridCapsuleFilter, setSimGridCapsuleFilter] = useState<"all" | "capsule">("all");
   const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
   
   // --- Refs ---
@@ -387,13 +385,9 @@ export default function App() {
     }
     let totalPrendas = 0;
     let totalDinero = 0;
-
-    const capsuleProds = prods.filter(p => p.isChristmasCapsule);
-    const regularProds = prods.filter(p => !p.isChristmasCapsule);
-
-    const renderProductItem = (p: Product) => {
+    prods.forEach(p => {
       const state = orders[p.id];
-      if (!state) return '';
+      if (!state) return;
       const sizeCount = getSimProductSizesCount(p);
       let curvesCount = 0;
       for (const color in state.variants) {
@@ -401,53 +395,23 @@ export default function App() {
       }
       const unitsCount = state.units || 0;
       const totalG = (curvesCount * sizeCount) + unitsCount;
-      if (totalG <= 0) return '';
-
-      const wholesale = Math.round(p.retailPrice / 2);
-      const sub = totalG * wholesale;
-      totalPrendas += totalG;
-      totalDinero += sub;
-
-      let itemBlock = `${p.isChristmasCapsule ? '🎄' : '📦'} *${p.title}*${p.isChristmasCapsule ? ` _(${p.capsuleTag || 'Cápsula Navideña'})_` : ''}\n`;
-      const variantLines: string[] = [];
-      Object.entries(state.variants).forEach(([c, q]) => {
-        const qty = Number(q) || 0;
-        if (qty > 0) variantLines.push(`${qty} curvas (${c})`);
-      });
-      if (variantLines.length > 0) itemBlock += `  • Curvas: ${variantLines.join(', ')}\n`;
-      if (state.units && state.units > 0) itemBlock += `  • Unidades: ${state.units} un.\n`;
-      if (state.variantsNotes?.trim()) itemBlock += `  • Detalle: ${state.variantsNotes.trim()}\n`;
-      itemBlock += `  _Subtotal: ${sett.currency || '$'}${sub.toLocaleString('es-AR')}_\n\n`;
-      return itemBlock;
-    };
-
-    let capsuleItemsText = '';
-    capsuleProds.forEach(p => {
-      capsuleItemsText += renderProductItem(p);
-    });
-
-    let regularItemsText = '';
-    regularProds.forEach(p => {
-      regularItemsText += renderProductItem(p);
-    });
-
-    if (capsuleItemsText.trim()) {
-      text += '━━━━━━━━━━━━━━━━━━━━━━━━\n';
-      text += `🎄 *${sett.christmasCapsuleTitle || 'CÁPSULA NAVIDEÑA'} (EDICIÓN FIESTAS):*\n`;
-      text += '━━━━━━━━━━━━━━━━━━━━━━━━\n';
-      text += capsuleItemsText;
-    }
-
-    if (regularItemsText.trim()) {
-      if (capsuleItemsText.trim()) {
-        text += '━━━━━━━━━━━━━━━━━━━━━━━━\n';
-        text += '📦 *PRODUCTOS DE LÍNEA:*\n';
-        text += '━━━━━━━━━━━━━━━━━━━━━━━━\n';
+      if (totalG > 0) {
+        const wholesale = Math.round(p.retailPrice / 2);
+        const sub = totalG * wholesale;
+        totalPrendas += totalG;
+        totalDinero += sub;
+        text += `📦 *${p.title}*\n`;
+        const variantLines: string[] = [];
+        Object.entries(state.variants).forEach(([c, q]) => {
+          const qty = Number(q) || 0;
+          if (qty > 0) variantLines.push(`${qty} curvas (${c})`);
+        });
+        if (variantLines.length > 0) text += `  • Curvas: ${variantLines.join(', ')}\n`;
+        if (state.units && state.units > 0) text += `  • Unidades: ${state.units} un.\n`;
+        if (state.variantsNotes?.trim()) text += `  • Detalle: ${state.variantsNotes.trim()}\n`;
+        text += `  _Subtotal: ${sett.currency || '$'}${sub.toLocaleString('es-AR')}_\n\n`;
       }
-      text += regularItemsText;
-    }
-
-    text += '━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    });
     text += `🔥 *TOTAL PRENDAS:* ${totalPrendas} prendas\n`;
     text += `💰 *TOTAL ESTIMADO:* ${sett.currency || '$'}${totalDinero.toLocaleString('es-AR')}\n`;
     text += '━━━━━━━━━━━━━━━━━━━━━━━━\n';
@@ -992,10 +956,7 @@ export default function App() {
   };
 
   // --- Simulated Catalog Interactions (Interactive Smartphone Preview) ---
-  const capsuleCount = products.filter((p) => p.isChristmasCapsule).length;
-  const firstCapsuleIdx = products.findIndex((p) => p.isChristmasCapsule);
-
-  const currentSimProduct = simPageIndex >= 0 && simPageIndex < products.length ? products[simPageIndex] : null;
+  const currentSimProduct = products[simPageIndex] || null;
   const currentSimProductActiveImageIdx = currentSimProduct
     ? simActiveImages[currentSimProduct.id] || 0
     : 0;
@@ -1004,47 +965,13 @@ export default function App() {
   const minSimIndex = hasSimCover ? -1 : 0;
 
   const handleSimNextPage = () => {
-    if (simPageIndex === -1) {
-      if (firstCapsuleIdx === 0 && settings.enableChristmasCapsule !== false) {
-        setSimPageIndex(-2);
-      } else {
-        setSimPageIndex(0);
-      }
-    } else if (simPageIndex === -2) {
-      setSimPageIndex(firstCapsuleIdx !== -1 ? firstCapsuleIdx : 0);
-    } else if (
-      simPageIndex === firstCapsuleIdx - 1 &&
-      firstCapsuleIdx > 0 &&
-      settings.enableChristmasCapsule !== false
-    ) {
-      setSimPageIndex(-2);
-    } else if (simPageIndex < products.length) {
+    if (simPageIndex < products.length) {
       setSimPageIndex((prev) => prev + 1);
     }
   };
 
   const handleSimPrevPage = () => {
-    if (simPageIndex === products.length) {
-      setSimPageIndex(products.length - 1);
-    } else if (
-      simPageIndex === firstCapsuleIdx &&
-      firstCapsuleIdx !== -1 &&
-      settings.enableChristmasCapsule !== false
-    ) {
-      setSimPageIndex(-2);
-    } else if (simPageIndex === -2) {
-      if (firstCapsuleIdx > 0) {
-        setSimPageIndex(firstCapsuleIdx - 1);
-      } else if (hasSimCover) {
-        setSimPageIndex(-1);
-      } else {
-        setSimPageIndex(0);
-      }
-    } else if (simPageIndex === 0) {
-      if (hasSimCover) {
-        setSimPageIndex(-1);
-      }
-    } else if (simPageIndex > 0) {
+    if (simPageIndex > minSimIndex) {
       setSimPageIndex((prev) => prev - 1);
     }
   };
@@ -1291,104 +1218,6 @@ export default function App() {
               )}
             </button>
           </div>
-        </div>
-      </div>
-    );
-  };
-
-  // --- Thematic Christmas Capsule Cover Page Renderer ---
-  const renderChristmasCapsuleCoverPage = (isDesktopModal = false) => {
-    const capsuleProducts = products.filter((p) => p.isChristmasCapsule);
-
-    const handleExploreCapsule = (e?: React.MouseEvent | React.TouchEvent) => {
-      if (e) {
-        if (e.cancelable) e.preventDefault();
-        e.stopPropagation();
-      }
-      if (firstCapsuleIdx !== -1) {
-        setSimPageIndex(firstCapsuleIdx);
-      } else {
-        setSimPageIndex(0);
-      }
-    };
-
-    const containerClasses = isDesktopModal
-      ? "w-full max-w-[460px] h-[82vh] bg-gradient-to-b from-[#2a040b] via-[#450a14] to-[#120205] text-white rounded-3xl overflow-hidden shadow-2xl relative my-auto border-4 border-red-950 select-none flex flex-col justify-between p-6"
-      : "flex-1 w-full h-full relative overflow-hidden bg-gradient-to-b from-[#2a040b] via-[#450a14] to-[#120205] text-white select-none flex flex-col justify-between p-6";
-
-    return (
-      <div className={containerClasses}>
-        {/* Festive background sparkles & ornaments */}
-        <div className="absolute inset-0 pointer-events-none opacity-25 overflow-hidden">
-          <div className="absolute top-10 left-6 text-2xl animate-pulse">✨</div>
-          <div className="absolute top-24 right-8 text-lg animate-pulse delay-300">⭐</div>
-          <div className="absolute top-1/2 left-4 text-sm animate-pulse delay-500">❄️</div>
-          <div className="absolute bottom-32 right-6 text-xl animate-pulse delay-700">✨</div>
-          <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-red-600/20 blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-amber-500/20 blur-3xl" />
-        </div>
-
-        {/* Top Header Badge */}
-        <div className="relative z-10 flex flex-col items-center text-center pt-4">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-950/80 border border-amber-400/40 text-amber-300 text-[10px] font-extrabold uppercase tracking-widest shadow-lg backdrop-blur-md">
-            <span>✨</span>
-            <span>Edición Especial Fiestas</span>
-            <span>✨</span>
-          </div>
-        </div>
-
-        {/* Center Main Card & Typography */}
-        <div className="relative z-10 flex flex-col items-center text-center my-auto px-2 space-y-4">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-red-600 to-rose-900 border-2 border-amber-400/60 shadow-2xl flex items-center justify-center text-3xl ring-8 ring-red-500/10">
-            🎄
-          </div>
-
-          <div className="space-y-1.5">
-            <h2 className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white drop-shadow-md">
-              {settings.christmasCapsuleTitle || "Cápsula Navideña"}
-            </h2>
-            <p className="text-xs font-bold text-amber-300 tracking-wide uppercase">
-              {settings.christmasCapsuleSubtitle || "Edición Especial Fiestas · Stock Limitado"}
-            </p>
-          </div>
-
-          {/* Decorative separator */}
-          <div className="flex items-center justify-center gap-2 text-amber-400/60 text-xs">
-            <span>✦</span>
-            <div className="w-12 h-px bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
-            <span>★</span>
-            <div className="w-12 h-px bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
-            <span>✦</span>
-          </div>
-
-          <p className="text-xs text-rose-100/80 leading-relaxed max-w-[290px]">
-            {settings.christmasCapsuleDescription || "Modelos exclusivos seleccionados para celebrar Navidad y Fin de Año con el mejor estilo."}
-          </p>
-
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs font-bold backdrop-blur-xs">
-            <span>🎁</span>
-            <span>{capsuleProducts.length} Modelos Exclusivos</span>
-          </div>
-        </div>
-
-        {/* Bottom Actions */}
-        <div className="relative z-10 flex flex-col gap-2.5 pb-2">
-          <button
-            type="button"
-            onClick={handleExploreCapsule}
-            className="w-full py-3.5 px-5 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:brightness-110 text-red-950 font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-2xl border border-amber-200/50 active:scale-98 transition-all cursor-pointer"
-          >
-            <span>Explorar Cápsula Navideña</span>
-            <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsSimGridViewOpen(true)}
-            className="w-full py-2 px-4 rounded-xl text-xs font-bold text-rose-200 hover:text-white hover:bg-white/5 transition-all text-center cursor-pointer"
-          >
-            Ver todas las prendas del catálogo
-          </button>
         </div>
       </div>
     );
@@ -1666,72 +1495,6 @@ export default function App() {
             )}
           </div>
 
-          {/* Configuración de la Cápsula Navideña */}
-          <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/60">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xs font-extrabold text-red-950 uppercase tracking-wider flex items-center gap-1.5">
-                <span className="text-sm">🎄</span>
-                <span>Cápsula Navideña (Sección y Portada)</span>
-              </h2>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.enableChristmasCapsule !== false}
-                  onChange={(e) => {
-                    const enabled = e.target.checked;
-                    setSettings({ ...settings, enableChristmasCapsule: enabled });
-                  }}
-                  className="sr-only peer"
-                />
-                <div className="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-red-600"></div>
-              </label>
-            </div>
-
-            {settings.enableChristmasCapsule !== false ? (
-              <div className="space-y-3">
-                <p className="text-[11px] text-slate-500 leading-snug">
-                  Crea una portada temática festiva que divide las prendas y agrega un filtro especial para tus clientes.
-                </p>
-
-                <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">Título de la Portada Temática</label>
-                  <input
-                    type="text"
-                    value={settings.christmasCapsuleTitle || ""}
-                    onChange={(e) => setSettings({ ...settings, christmasCapsuleTitle: e.target.value })}
-                    className="w-full text-xs font-semibold border border-slate-200 rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-red-100 focus:border-red-500 outline-none transition-all"
-                    placeholder="Cápsula Navideña"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">Subtítulo / Bajada</label>
-                  <input
-                    type="text"
-                    value={settings.christmasCapsuleSubtitle || ""}
-                    onChange={(e) => setSettings({ ...settings, christmasCapsuleSubtitle: e.target.value })}
-                    className="w-full text-xs font-semibold border border-slate-200 rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-red-100 focus:border-red-500 outline-none transition-all"
-                    placeholder="Edición Especial Fiestas · Stock Limitado"
-                  />
-                </div>
-
-                {capsuleCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setSimPageIndex(-2)}
-                    className="w-full py-2 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
-                  >
-                    <span>Previsualizar Portada de Cápsula ({capsuleCount} prendas)</span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              <p className="text-[11px] text-slate-400">
-                La sección de cápsula navideña está desactivada.
-              </p>
-            )}
-          </div>
-
           {/* Products Nav Box */}
           <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/60 flex-1 flex flex-col min-h-[360px]">
             <div className="flex items-center justify-between mb-2.5">
@@ -1776,29 +1539,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Capsule Filter Pills in Sidebar */}
-            {capsuleCount > 0 && (
-              <div className="flex items-center gap-1.5 mb-2.5 bg-slate-100/80 p-1 rounded-xl">
-                <button
-                  onClick={() => setSidebarCapsuleFilter("all")}
-                  className={`flex-1 py-1 px-2 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-                    sidebarCapsuleFilter === "all" ? "bg-white text-slate-800 shadow-2xs" : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  Todas ({products.length})
-                </button>
-                <button
-                  onClick={() => setSidebarCapsuleFilter("capsule")}
-                  className={`flex-1 py-1 px-2 rounded-lg text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                    sidebarCapsuleFilter === "capsule" ? "bg-red-600 text-white shadow-2xs" : "text-red-700 hover:text-red-800"
-                  }`}
-                >
-                  <span>🎄 Cápsula</span>
-                  <span>({capsuleCount})</span>
-                </button>
-              </div>
-            )}
-
             {/* Prominent Quick Button to open the Visual Mosaic Reordering Organizer */}
             <button
               onClick={() => setIsReorderModalOpen(true)}
@@ -1814,149 +1554,130 @@ export default function App() {
             {/* Product navigation cards (List or Grid/Mosaic Mode) */}
             {sidebarViewMode === "list" ? (
               <div className="space-y-1.5 overflow-y-auto flex-1 max-h-[380px] no-scrollbar pr-1">
-                {products
-                  .map((p, idx) => ({ p, idx }))
-                  .filter(({ p }) => sidebarCapsuleFilter === "all" || p.isChristmasCapsule)
-                  .map(({ p, idx }) => {
-                    const isActive = p.id === activeProductId;
-                    return (
-                      <div
-                        key={p.id}
-                        data-product-index={idx}
-                        onClick={() => handleSelectProduct(p.id)}
-                        draggable
-                        onDragStart={() => handleProductDragStart(idx)}
-                        onDragOver={(e) => handleProductDragOver(e, idx)}
-                        onDrop={(e) => handleProductDrop(e, idx)}
-                        onDragEnd={handleProductDragEnd}
-                        className={`group p-2 flex items-center justify-between gap-2 cursor-pointer rounded-xl border transition-all ${
-                          isActive
-                            ? "bg-blue-50/75 border-blue-200 shadow-xs"
-                            : "bg-white border-slate-150 hover:bg-slate-50/50 hover:border-slate-300"
-                        } ${draggedProductIdx === idx ? "opacity-40 border-dashed border-blue-400" : ""}`}
-                      >
-                        <div className="flex items-center space-x-2 min-w-0 flex-1">
-                          {/* Position badge & Up/Down Sorting Buttons */}
-                          <div className="flex items-center space-x-1 flex-shrink-0 border-r border-slate-100 pr-1.5 mr-0.5">
-                            <span
-                              className={`text-[9px] font-black font-mono w-5 h-5 rounded-md flex items-center justify-center ${
-                                idx === 0
-                                  ? "bg-emerald-500 text-white"
-                                  : isActive
-                                  ? "bg-blue-600 text-white"
-                                  : "bg-slate-100 text-slate-600"
-                              }`}
-                              title={`Posición #${idx + 1}`}
+                {products.map((p, idx) => {
+                  const isActive = p.id === activeProductId;
+                  return (
+                    <div
+                      key={p.id}
+                      data-product-index={idx}
+                      onClick={() => handleSelectProduct(p.id)}
+                      draggable
+                      onDragStart={() => handleProductDragStart(idx)}
+                      onDragOver={(e) => handleProductDragOver(e, idx)}
+                      onDrop={(e) => handleProductDrop(e, idx)}
+                      onDragEnd={handleProductDragEnd}
+                      className={`group p-2 flex items-center justify-between gap-2 cursor-pointer rounded-xl border transition-all ${
+                        isActive
+                          ? "bg-blue-50/75 border-blue-200 shadow-xs"
+                          : "bg-white border-slate-150 hover:bg-slate-50/50 hover:border-slate-300"
+                      } ${draggedProductIdx === idx ? "opacity-40 border-dashed border-blue-400" : ""}`}
+                    >
+                      <div className="flex items-center space-x-2 min-w-0 flex-1">
+                        {/* Position badge & Up/Down Sorting Buttons */}
+                        <div className="flex items-center space-x-1 flex-shrink-0 border-r border-slate-100 pr-1.5 mr-0.5">
+                          <span
+                            className={`text-[9px] font-black font-mono w-5 h-5 rounded-md flex items-center justify-center ${
+                              idx === 0
+                                ? "bg-emerald-500 text-white"
+                                : isActive
+                                ? "bg-blue-600 text-white"
+                                : "bg-slate-100 text-slate-600"
+                            }`}
+                            title={`Posición #${idx + 1}`}
+                          >
+                            #{idx + 1}
+                          </span>
+                          <div className="flex flex-col items-center">
+                            <button
+                              onClick={(e) => moveProductUp(idx, e)}
+                              disabled={idx === 0}
+                              className="p-0.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
+                              title="Subir"
                             >
-                              #{idx + 1}
-                            </span>
-                            <div className="flex flex-col items-center">
-                              <button
-                                onClick={(e) => moveProductUp(idx, e)}
-                                disabled={idx === 0}
-                                className="p-0.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
-                                title="Subir"
-                              >
-                                <ChevronUp className="w-3 h-3" />
-                              </button>
-                              <button
-                                onClick={(e) => moveProductDown(idx, e)}
-                                disabled={idx === products.length - 1}
-                                className="p-0.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
-                                title="Bajar"
-                              >
-                                <ChevronDown className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="w-8.5 h-8.5 rounded-lg overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0 relative">
-                            <img src={p.images[0]} className="w-full h-full object-cover select-none pointer-events-none" alt="" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 truncate">
-                              <h3 className={`text-xs font-bold truncate ${isActive ? "text-blue-900" : "text-slate-700"}`}>
-                                {p.title || "Sin título"}
-                              </h3>
-                              {p.isChristmasCapsule && (
-                                <span className="px-1.5 py-0.2 rounded text-[7.5px] font-black bg-red-100 text-red-700 border border-red-200 shrink-0">
-                                  🎄 Cápsula
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
-                              {settings.currency}{p.retailPrice.toLocaleString('es-AR')}
-                            </p>
+                              <ChevronUp className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={(e) => moveProductDown(idx, e)}
+                              disabled={idx === products.length - 1}
+                              className="p-0.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
+                              title="Bajar"
+                            >
+                              <ChevronDown className="w-3 h-3" />
+                            </button>
                           </div>
                         </div>
-                        
-                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={(e) => handleDeleteProduct(p.id, e)}
-                            className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                            title="Eliminar"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+
+                        <div className="w-8.5 h-8.5 rounded-lg overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0">
+                          <img src={p.images[0]} className="w-full h-full object-cover select-none pointer-events-none" alt="" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className={`text-xs font-bold truncate ${isActive ? "text-blue-900" : "text-slate-700"}`}>
+                            {p.title || "Sin título"}
+                          </h3>
+                          <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
+                            {settings.currency}{p.retailPrice.toLocaleString('es-AR')}
+                          </p>
                         </div>
                       </div>
-                    );
-                  })}
+                      
+                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => handleDeleteProduct(p.id, e)}
+                          className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                          title="Eliminar"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               /* Inline Mosaic Grid in Sidebar */
               <div className="grid grid-cols-2 gap-2 overflow-y-auto flex-1 max-h-[380px] no-scrollbar pr-1">
-                {products
-                  .map((p, idx) => ({ p, idx }))
-                  .filter(({ p }) => sidebarCapsuleFilter === "all" || p.isChristmasCapsule)
-                  .map(({ p, idx }) => {
-                    const isActive = p.id === activeProductId;
-                    return (
-                      <div
-                        key={p.id}
-                        data-product-index={idx}
-                        onClick={() => handleSelectProduct(p.id)}
-                        draggable
-                        onDragStart={() => handleProductDragStart(idx)}
-                        onDragOver={(e) => handleProductDragOver(e, idx)}
-                        onDrop={(e) => handleProductDrop(e, idx)}
-                        onDragEnd={handleProductDragEnd}
-                        className={`group relative p-2 flex flex-col justify-between cursor-pointer rounded-xl border transition-all ${
-                          isActive
-                            ? "bg-blue-50/75 border-blue-400 shadow-xs ring-1 ring-blue-300"
-                            : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-2xs"
-                        } ${draggedProductIdx === idx ? "opacity-40 border-dashed border-blue-400" : ""}`}
+                {products.map((p, idx) => {
+                  const isActive = p.id === activeProductId;
+                  return (
+                    <div
+                      key={p.id}
+                      data-product-index={idx}
+                      onClick={() => handleSelectProduct(p.id)}
+                      draggable
+                      onDragStart={() => handleProductDragStart(idx)}
+                      onDragOver={(e) => handleProductDragOver(e, idx)}
+                      onDrop={(e) => handleProductDrop(e, idx)}
+                      onDragEnd={handleProductDragEnd}
+                      className={`group relative p-2 flex flex-col justify-between cursor-pointer rounded-xl border transition-all ${
+                        isActive
+                          ? "bg-blue-50/75 border-blue-400 shadow-xs ring-1 ring-blue-300"
+                          : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-2xs"
+                      } ${draggedProductIdx === idx ? "opacity-40 border-dashed border-blue-400" : ""}`}
+                    >
+                      {/* Badge # */}
+                      <span
+                        className={`absolute top-1.5 left-1.5 text-[9px] font-black font-mono px-1.5 py-0.2 rounded-md shadow-xs z-10 ${
+                          idx === 0
+                            ? "bg-emerald-500 text-white"
+                            : isActive
+                            ? "bg-blue-600 text-white"
+                            : "bg-slate-900/80 text-white"
+                        }`}
                       >
-                        {/* Badge # */}
-                        <span
-                          className={`absolute top-1.5 left-1.5 text-[9px] font-black font-mono px-1.5 py-0.2 rounded-md shadow-xs z-10 ${
-                            idx === 0
-                              ? "bg-emerald-500 text-white"
-                              : isActive
-                              ? "bg-blue-600 text-white"
-                              : "bg-slate-900/80 text-white"
-                          }`}
-                        >
-                          #{idx + 1}
-                        </span>
+                        #{idx + 1}
+                      </span>
 
-                        {p.isChristmasCapsule && (
-                          <span className="absolute top-1.5 right-1.5 text-[8px] font-black bg-red-600 text-white px-1.5 py-0.2 rounded shadow-xs z-10 flex items-center gap-0.5">
-                            🎄
-                          </span>
-                        )}
+                      {/* Image Thumbnail */}
+                      <div className="w-full aspect-square rounded-lg overflow-hidden bg-slate-50 border border-slate-100 mb-1.5 flex items-center justify-center">
+                        <img src={p.images[0]} className="w-full h-full object-cover select-none pointer-events-none" alt="" />
+                      </div>
 
-                        {/* Image Thumbnail */}
-                        <div className="w-full aspect-square rounded-lg overflow-hidden bg-slate-50 border border-slate-100 mb-1.5 flex items-center justify-center">
-                          <img src={p.images[0]} className="w-full h-full object-cover select-none pointer-events-none" alt="" />
-                        </div>
-
-                        <h3 className={`text-[11px] font-bold truncate ${isActive ? "text-blue-900" : "text-slate-700"}`}>
-                          {p.title || "Sin título"}
-                        </h3>
-                        <p className="text-[9.5px] text-slate-400 font-semibold font-mono">
-                          {settings.currency}{p.retailPrice.toLocaleString('es-AR')}
-                        </p>
+                      <h3 className={`text-[11px] font-bold truncate ${isActive ? "text-blue-900" : "text-slate-700"}`}>
+                        {p.title || "Sin título"}
+                      </h3>
+                      <p className="text-[9.5px] text-slate-400 font-semibold font-mono">
+                        {settings.currency}{p.retailPrice.toLocaleString('es-AR')}
+                      </p>
 
                       {/* Micro reordering arrows */}
                       <div className="flex items-center justify-between mt-1.5 pt-1 border-t border-slate-100">
@@ -2291,72 +2012,6 @@ export default function App() {
                 )}
               </div>
 
-              {/* Christmas Capsule Toggle & Tag */}
-              <div className="bg-gradient-to-r from-red-50/90 via-rose-50/60 to-amber-50/40 border border-red-200/90 rounded-2xl p-4 shadow-2xs space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-red-600 text-white flex items-center justify-center text-lg shadow-sm shadow-red-200">
-                      🎄
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-red-950 uppercase tracking-wider">
-                          Cápsula Navideña / Fiestas
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-red-100 text-red-700 border border-red-200">
-                          Especial
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-red-900/80 mt-0.5 leading-snug">
-                        Distingue esta prenda con insignia festiva, filtro exclusivo y agrupación especial en el pedido.
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => updateActiveProduct("isChristmasCapsule", !activeProduct.isChristmasCapsule)}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                      activeProduct.isChristmasCapsule ? "bg-red-600" : "bg-slate-200"
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                        activeProduct.isChristmasCapsule ? "translate-x-5" : "translate-x-0"
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {activeProduct.isChristmasCapsule && (
-                  <div className="pt-2.5 border-t border-red-200/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
-                    <span className="text-[11px] font-bold text-red-900 flex items-center gap-1.5 shrink-0">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-                      <span>Etiqueta de la prenda:</span>
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {["Edición Fiestas", "Navidad", "Fin de Año", "Edición Limitada", "Noche & Brillo"].map((tag) => {
-                        const isSelected = (activeProduct.capsuleTag || "Edición Fiestas") === tag;
-                        return (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => updateActiveProduct("capsuleTag", tag)}
-                            className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer border ${
-                              isSelected
-                                ? "bg-red-600 text-white border-red-600 shadow-2xs"
-                                : "bg-white/80 text-red-800 border-red-200 hover:bg-white"
-                            }`}
-                          >
-                            {tag}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {/* Talles y Colores inputs condicionales */}
               {!activeProduct.isExistingInStore ? (
                 // Producto Nuevo: dejar todo como está (talles disponibles, cantidad de talles, colores disponibles)
@@ -2570,17 +2225,6 @@ export default function App() {
                     <span>Portada</span>
                   </button>
                 )}
-                {capsuleCount > 0 && settings.enableChristmasCapsule !== false && (
-                  <button
-                    onClick={() => setSimPageIndex(-2)}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
-                      simPageIndex === -2 ? "bg-red-600 text-white shadow-2xs" : "text-red-700 hover:bg-red-50"
-                    }`}
-                    title="Ver Portada Temática de la Cápsula Navideña"
-                  >
-                    <span>🎄 Cápsula</span>
-                  </button>
-                )}
                 <button
                   onClick={() => setSimPageIndex(0)}
                   className={`px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
@@ -2671,24 +2315,10 @@ export default function App() {
                   <div className="absolute top-3 left-3 z-30">
                     <button
                       onClick={() => setIsSimGridViewOpen(true)}
-                      className="w-8 h-8 rounded-full bg-white/95 shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 transition-all active:scale-90 animate-in fade-in cursor-pointer"
+                      className="w-8 h-8 rounded-full bg-white/95 shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 transition-all active:scale-90 animate-in fade-in"
                       title="Ver todos los productos"
                     >
                       <LayoutGrid className="w-4 h-4 stroke-[2]" />
-                    </button>
-                  </div>
-                )}
-
-                {/* Floating Capsule Quick Jump Button (Top-Right) */}
-                {capsuleCount > 0 && settings.enableChristmasCapsule !== false && simPageIndex !== -2 && (
-                  <div className="absolute top-3 right-3 z-30">
-                    <button
-                      onClick={() => setSimPageIndex(-2)}
-                      className="px-2.5 py-1 rounded-full bg-red-600/95 hover:bg-red-700 text-white font-extrabold text-[10px] shadow-md border border-red-300/40 flex items-center gap-1 transition-all active:scale-90 animate-in fade-in cursor-pointer"
-                      title="Ver Portada Temática de la Cápsula Navideña"
-                    >
-                      <span>🎄 Cápsula</span>
-                      <span className="bg-white/20 px-1 py-0.2 rounded-full text-[9px]">{capsuleCount}</span>
                     </button>
                   </div>
                 )}
@@ -2697,40 +2327,16 @@ export default function App() {
                 {isSimGridViewOpen && (
                   <div className="absolute inset-0 bg-white z-50 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-200">
                     {/* Header of Grid View */}
-                    <div className="flex flex-col border-b border-slate-150 px-4 py-2.5 gap-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">
-                          Productos Disponibles
-                        </span>
-                        <button
-                          onClick={() => setIsSimGridViewOpen(false)}
-                          className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      {/* Capsule Filter Pills inside Grid View */}
-                      {capsuleCount > 0 && (
-                        <div className="flex items-center gap-1.5 bg-slate-100/80 p-0.5 rounded-xl text-xs">
-                          <button
-                            onClick={() => setSimGridCapsuleFilter("all")}
-                            className={`flex-1 py-1 px-2 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-                              simGridCapsuleFilter === "all" ? "bg-white text-slate-800 shadow-2xs" : "text-slate-500 hover:text-slate-700"
-                            }`}
-                          >
-                            Todas ({products.length})
-                          </button>
-                          <button
-                            onClick={() => setSimGridCapsuleFilter("capsule")}
-                            className={`flex-1 py-1 px-2 rounded-lg text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                              simGridCapsuleFilter === "capsule" ? "bg-red-600 text-white shadow-2xs" : "text-red-700 hover:text-red-800"
-                            }`}
-                          >
-                            <span>🎄 Cápsula ({capsuleCount})</span>
-                          </button>
-                        </div>
-                      )}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-150">
+                      <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                        Productos Disponibles
+                      </span>
+                      <button
+                        onClick={() => setIsSimGridViewOpen(false)}
+                        className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
                     </div>
 
                     {/* Scrollable grid content */}
@@ -2740,50 +2346,40 @@ export default function App() {
                           ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
                           : "grid-cols-2 sm:grid-cols-3"
                       }`}>
-                        {products
-                          .map((product, i) => ({ product, i }))
-                          .filter(({ product }) => simGridCapsuleFilter === "all" || product.isChristmasCapsule)
-                          .map(({ product, i }) => {
-                            const wholesalePrice = Math.round((product.retailPrice || 0) / 2);
-                            return (
-                              <div
-                                key={product.id}
-                                onClick={() => {
-                                  setSimPageIndex(i);
-                                  setIsSimGridViewOpen(false);
-                                }}
-                                className={`bg-white border rounded-xl p-2 cursor-pointer transition-all active:scale-[0.96] flex flex-col space-y-1.5 shadow-2xs hover:shadow-xs relative ${
-                                  product.isChristmasCapsule ? "border-red-200 hover:border-red-500" : "border-slate-200 hover:border-blue-500"
-                                }`}
-                              >
-                                {product.isChristmasCapsule && (
-                                  <span className="absolute top-1.5 right-1.5 bg-red-600 text-white text-[7.5px] font-black px-1.5 py-0.5 rounded shadow-xs z-10 flex items-center gap-0.5">
-                                    🎄 Cápsula
+                        {products.map((product, i) => {
+                          const wholesalePrice = Math.round((product.retailPrice || 0) / 2);
+                          return (
+                            <div
+                              key={product.id}
+                              onClick={() => {
+                                setSimPageIndex(i);
+                                setIsSimGridViewOpen(false);
+                              }}
+                              className="bg-white border border-slate-200 rounded-xl p-2 cursor-pointer hover:border-blue-500 transition-all active:scale-[0.96] flex flex-col space-y-1.5 shadow-2xs hover:shadow-xs"
+                            >
+                              <div className="aspect-square w-full rounded-lg overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center p-1">
+                                <img
+                                  src={product.images[0] || ""}
+                                  alt={product.title}
+                                  className="max-w-full max-h-full object-contain"
+                                />
+                              </div>
+                              <div className="flex flex-col flex-1 min-h-[32px] justify-between">
+                                <h5 className="text-[10px] sm:text-xs font-bold text-slate-800 line-clamp-2 leading-snug">
+                                  {product.title || "Producto"}
+                                </h5>
+                                <div className="flex items-center justify-between pt-1 border-t border-slate-50">
+                                  <span className="text-[10px] sm:text-xs font-black text-green-600 font-mono">
+                                    {settings.currency}{wholesalePrice.toLocaleString("es-AR")}
                                   </span>
-                                )}
-                                <div className="aspect-square w-full rounded-lg overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center p-1">
-                                  <img
-                                    src={product.images[0] || ""}
-                                    alt={product.title}
-                                    className="max-w-full max-h-full object-contain"
-                                  />
-                                </div>
-                                <div className="flex flex-col flex-1 min-h-[32px] justify-between">
-                                  <h5 className="text-[10px] sm:text-xs font-bold text-slate-800 line-clamp-2 leading-snug">
-                                    {product.title || "Producto"}
-                                  </h5>
-                                  <div className="flex items-center justify-between pt-1 border-t border-slate-50">
-                                    <span className="text-[10px] sm:text-xs font-black text-green-600 font-mono">
-                                      {settings.currency}{wholesalePrice.toLocaleString("es-AR")}
-                                    </span>
-                                    <span className="text-[7px] sm:text-[8px] font-extrabold text-slate-400 bg-slate-100 px-1 py-0.5 rounded uppercase">
-                                      Mayorista
-                                    </span>
-                                  </div>
+                                  <span className="text-[7px] sm:text-[8px] font-extrabold text-slate-400 bg-slate-100 px-1 py-0.5 rounded uppercase">
+                                    Mayorista
+                                  </span>
                                 </div>
                               </div>
-                            );
-                          })}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

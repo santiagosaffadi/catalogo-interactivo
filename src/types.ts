@@ -9,8 +9,6 @@ export interface Product {
   sizesCount?: number;
   isExistingInStore?: boolean;
   externalStoreUrl?: string;
-  isChristmasCapsule?: boolean;
-  capsuleTag?: string;
 }
 
 export interface CatalogSettings {
@@ -28,9 +26,4 @@ export interface CatalogSettings {
   coverTitle?: string;
   coverSubtitle?: string;
   coverButtonText?: string;
-  // Cápsula Navideña
-  enableChristmasCapsule?: boolean;
-  christmasCapsuleTitle?: string;
-  christmasCapsuleSubtitle?: string;
-  christmasCapsuleDescription?: string;
 }

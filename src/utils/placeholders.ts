@@ -225,8 +225,6 @@ export const DEFAULT_PRODUCTS: Product[] = [
     ],
     sizes: "Caja de 40 mm",
     colors: "Oro Clásico, Plata Oxford, Rosa Metalizado",
-    isChristmasCapsule: true,
-    capsuleTag: "Edición Fiestas",
   },
   {
     id: "prod-3",
@@ -256,8 +254,4 @@ export const DEFAULT_SETTINGS: CatalogSettings = {
   coverTitle: "",
   coverSubtitle: "",
   coverButtonText: "Ver Catálogo",
-  enableChristmasCapsule: true,
-  christmasCapsuleTitle: "Cápsula Navideña",
-  christmasCapsuleSubtitle: "Edición Especial Fiestas · Stock Limitado",
-  christmasCapsuleDescription: "Prendas exclusivas seleccionadas para celebrar Navidad y Fin de Año con el mejor estilo.",
 };

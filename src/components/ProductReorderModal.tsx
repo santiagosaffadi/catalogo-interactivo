@@ -131,14 +131,6 @@ export function ProductReorderModal({
     setShowSortMenu(false);
   };
 
-  const handleGroupCapsule = (toStart = true) => {
-    const capsule = products.filter((p) => p.isChristmasCapsule);
-    const regular = products.filter((p) => !p.isChristmasCapsule);
-    const reordered = toStart ? [...capsule, ...regular] : [...regular, ...capsule];
-    onReorder(reordered);
-    setShowSortMenu(false);
-  };
-
   const filteredIndices = products
     .map((p, idx) => ({ product: p, originalIndex: idx }))
     .filter(({ product }) => {
@@ -257,25 +249,6 @@ export function ProductReorderModal({
                     <span>💎</span>
                     <span>Por Mayor Precio</span>
                   </button>
-                  {products.some((p) => p.isChristmasCapsule) && (
-                    <>
-                      <div className="h-px bg-slate-100 my-1" />
-                      <button
-                        onClick={() => handleGroupCapsule(true)}
-                        className="w-full text-left px-3 py-2 hover:bg-red-50 text-red-700 font-semibold rounded-xl flex items-center space-x-2 transition-colors cursor-pointer text-xs"
-                      >
-                        <span>🎄</span>
-                        <span>Agrupar Cápsula al Inicio</span>
-                      </button>
-                      <button
-                        onClick={() => handleGroupCapsule(false)}
-                        className="w-full text-left px-3 py-2 hover:bg-red-50 text-red-700 font-semibold rounded-xl flex items-center space-x-2 transition-colors cursor-pointer text-xs"
-                      >
-                        <span>🎄</span>
-                        <span>Agrupar Cápsula al Final</span>
-                      </button>
-                    </>
-                  )}
                 </div>
               )}
             </div>
@@ -342,11 +315,6 @@ export function ProductReorderModal({
 
                       {/* Indicators */}
                       <div className="flex items-center gap-1">
-                        {p.isChristmasCapsule && (
-                          <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded-md bg-red-600 text-white shadow-xs">
-                            🎄 Cápsula
-                          </span>
-                        )}
                         {p.isExistingInStore && (
                           <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded-md bg-blue-500/90 text-white shadow-xs flex items-center gap-0.5">
                             <Globe className="w-2.5 h-2.5" />
