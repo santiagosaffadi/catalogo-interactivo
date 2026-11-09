@@ -1087,7 +1087,7 @@ export default function App() {
     if (coverType === "christmas") {
       return (
         <div className={isDesktopModal ? "w-full max-w-[460px] h-[82vh] rounded-3xl overflow-hidden shadow-2xl relative my-auto flex items-center justify-center text-center" : "flex-1 w-full h-full relative overflow-hidden flex items-center justify-center text-center"} style={{ background: `#fff url(${christmasCover}) center / contain no-repeat` }}>
-          <div className="px-6 -translate-y-14 text-[#a92e38]">
+          <div className="px-6 text-[#a92e38]" style={{ transform: "translateY(-28%)" }}>
             <p className="text-[9px] font-bold tracking-widest">✦ NOS PREPARAMOS PARA LAS FIESTAS ✦</p>
             <h2 className="font-serif font-bold text-3xl my-3 leading-tight">Cápsula<br />Navideña</h2>
             <p className="text-xs mb-4">Una colección para vivir momentos mágicos</p>

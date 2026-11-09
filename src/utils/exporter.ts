@@ -1668,7 +1668,7 @@ export const generateInteractiveCatalogHtml = (
     }
     .editorial-slide { padding: 0 !important; background: #111; display: flex; align-items: center; justify-content: center; }
     .editorial-slide img { width: 100%; height: 100%; display: block; }
-    .christmas-cover { position: relative; background: #fffdf9 url('${christmasCover}') center / contain no-repeat; color: #a92e38; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .slide.christmas-cover { display: flex !important; overflow: hidden !important; padding: 0 !important; position: relative; background: #fffdf9 url('${christmasCover}') center / contain no-repeat; color: #a92e38; display: flex; align-items: center; justify-content: center; text-align: center; }
     .christmas-cover-content { padding: 20px; transform: translateY(-28%); }
     .christmas-cover-content span { font-size: 10px; letter-spacing: .2em; color: #a92e38; font-weight: 700; }
     .christmas-cover-content h2 { font-family: Georgia, serif; font-size: clamp(30px, 7vw, 52px); line-height: 1.05; margin: 14px 0; }
