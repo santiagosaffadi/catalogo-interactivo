@@ -1,4 +1,5 @@
 import { Product, CatalogSettings } from "../types";
+import { christmasCover } from "../assets/christmasCover";
 import { extractYouTubeId } from "./youtube";
 
 const escapeHtml = (value: unknown): string => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]!));
@@ -18,6 +19,10 @@ export const generateInteractiveCatalogHtml = (
   const coverButtonText = settings.coverButtonText || "Ver Catálogo";
   const defaultPoster = products[0] && products[0].images && products[0].images[0] ? products[0].images[0] : "";
   const coverPoster = youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : (settings.coverPosterUrl || defaultPoster);
+
+  const groupStarts = products.map((p, i) => !!p.isChristmasCapsule && (i === 0 || !products[i - 1].isChristmasCapsule));
+  const productSlideIndex = (i: number) => (hasCover ? 1 : 0) + i + groupStarts.slice(0, i + 1).filter(Boolean).length;
+  const summaryIndex = (hasCover ? 1 : 0) + products.length + groupStarts.filter(Boolean).length;
 
   const slidesHtml = products.map((product, i) => {
     const title = product.title || "Producto";
@@ -72,7 +77,8 @@ export const generateInteractiveCatalogHtml = (
     }
 
     return `
-      <div class="slide product-slide" id="slide-${hasCover ? i + 1 : i}">
+      ${groupStarts[i] ? `<div class="slide christmas-cover" id="slide-${productSlideIndex(i) - 1}"><div class="christmas-cover-content"><span>✦ UNA COLECCIÓN PARA CELEBRAR ✦</span><h2>Cápsula<br>Navideña</h2><p>Descubrí los productos de nuestra colección especial</p><button type="button" onclick="window.goToSlide(${productSlideIndex(i)})">Ver colección →</button></div></div>` : ''}
+      <div class="slide product-slide ${product.isChristmasCapsule ? 'christmas-product' : ''}" id="slide-${productSlideIndex(i)}">
         <div class="slide-content">
           <!-- Title Block -->
           <div class="product-header">
@@ -80,6 +86,7 @@ export const generateInteractiveCatalogHtml = (
               <span class="product-badge">
                 Producto ${i + 1} de ${products.length}
               </span>
+              ${product.isChristmasCapsule ? `<span class="christmas-badge">✦ Cápsula Navideña ✦</span>` : ''}
               ${product.isExistingInStore ? `
                 <span class="product-badge" style="background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
                   Tienda Online
@@ -200,8 +207,8 @@ export const generateInteractiveCatalogHtml = (
           <!-- Direct Ver Carrito Button -->
           <button type="button" 
                   class="btn-go-to-cart" 
-                  onclick="window.goToSlide(${hasCover ? products.length + 1 : products.length})" 
-                  ontouchend="window.goToSlide(${hasCover ? products.length + 1 : products.length})">
+                  onclick="window.goToSlide(${summaryIndex})"
+                  ontouchend="window.goToSlide(${summaryIndex})">
             <svg style="width: 15px; height: 15px;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
@@ -217,7 +224,7 @@ export const generateInteractiveCatalogHtml = (
     const wholesalePrice = Math.round(retailPrice / 2);
     const firstImg = product.images && product.images.length > 0 ? product.images[0] : '';
     return `
-      <button type="button" class="grid-item" onclick="window.selectProductFromGrid(${hasCover ? i + 1 : i})">
+      <button type="button" class="grid-item" onclick="window.selectProductFromGrid(${productSlideIndex(i)})">
         <div class="grid-item-image-wrapper">
           <img src="${firstImg}" alt="${escapeHtml(product.title || 'Producto')}" />
         </div>
@@ -521,7 +528,7 @@ export const generateInteractiveCatalogHtml = (
         border-radius: 20px;
       }
       /* Center the summary slide nicely on desktop */
-      #slide-${products.length} {
+      #slide-${summaryIndex} {
         max-width: 720px;
         margin: 0 auto;
         display: flex !important;
@@ -1641,6 +1648,14 @@ export const generateInteractiveCatalogHtml = (
       width: 18px;
       height: 18px;
     }
+    .christmas-cover { position: relative; background: #102719 url('${christmasCover}') center / cover no-repeat; color: #fff8df; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .christmas-cover-content { padding: 24px; text-shadow: 0 2px 12px #06190e; }
+    .christmas-cover-content span { font-size: 11px; letter-spacing: .22em; color: #f5d895; font-weight: 700; }
+    .christmas-cover-content h2 { font-family: Georgia, serif; font-size: clamp(36px, 8vw, 64px); line-height: 1.05; margin: 20px 0; }
+    .christmas-cover-content p { font-size: 14px; margin: 0 auto 24px; max-width: 260px; }
+    .christmas-cover-content button { cursor: pointer; border: 1px solid #edd395; border-radius: 999px; padding: 12px 24px; background: #f5e5be; color: #173826; font-weight: 800; }
+    .christmas-badge { background: #e7f2e8; color: #245b3e; border: 1px solid #d3b36d; padding: 3px 8px; border-radius: 999px; font-size: 9px; font-weight: 800; }
+    .christmas-product .product-header { border-top: 3px solid #d3b36d; border-radius: 8px; }
     .grid-view-overlay {
       position: absolute;
       top: 0;
@@ -1844,7 +1859,7 @@ export const generateInteractiveCatalogHtml = (
         ${sliderContent}
         
         <!-- SUMMARY SLIDE -->
-        <div class="slide" id="slide-${hasCover ? products.length + 1 : products.length}">
+        <div class="slide" id="slide-${summaryIndex}">
           <div class="slide-content" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
             <div class="product-header">
               <span class="product-badge" style="background-color: #f1f5f9; color: #475569;">
@@ -1960,7 +1975,7 @@ export const generateInteractiveCatalogHtml = (
     var products = ${productsJson};
     var settings = ${settingsJson};
     var hasCover = ${hasCover ? 'true' : 'false'};
-    var maxSlideIndex = hasCover ? (products.length + 1) : products.length;
+    var maxSlideIndex = ${summaryIndex};
 
     // Application State
     var currentIndex = 0;

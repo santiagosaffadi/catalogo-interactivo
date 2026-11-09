@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 
 import { Product, CatalogSettings } from "./types";
+import { christmasCover } from "./assets/christmasCover";
 import {
   DEFAULT_PRODUCTS,
   DEFAULT_SETTINGS,
@@ -905,6 +906,9 @@ export default function App() {
         images: Array.isArray(p.images) ? p.images : [],
         sizes: p.sizes || "",
         colors: p.colors || "",
+        isChristmasCapsule: p.isChristmasCapsule === true,
+        isExistingInStore: p.isExistingInStore === true,
+        externalStoreUrl: typeof p.externalStoreUrl === "string" ? p.externalStoreUrl : "",
         sizesCount: typeof p.sizesCount === "number" ? p.sizesCount : undefined
       }));
 
@@ -1756,6 +1760,16 @@ export default function App() {
           {activeProduct ? (
             <div className="bg-white rounded-3xl p-5 md:p-6 shadow-xs border border-slate-200/60 flex-1 space-y-5">
               
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 flex items-center gap-3">
+                <img src={christmasCover} alt="" className="w-14 h-20 object-cover rounded-lg" />
+                <div className="flex-1">
+                  <label className="flex items-center gap-2 text-sm font-bold text-emerald-900 cursor-pointer">
+                    <input type="checkbox" checked={!!activeProduct.isChristmasCapsule} onChange={(e) => updateActiveProduct("isChristmasCapsule", e.target.checked)} className="w-4 h-4 accent-emerald-700" />
+                    ✦ Cápsula Navideña
+                  </label>
+                  <p className="text-xs text-emerald-800 mt-1">Marcá las prendas de la colección y ordenalas juntas. La portada aparecerá antes de cada grupo navideño.</p>
+                </div>
+              </div>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-2">
                 <div>
                   <div className="flex items-center space-x-2">
@@ -2694,6 +2708,7 @@ export default function App() {
                           >
                             Producto {simPageIndex + 1} de {products.length}
                           </span>
+                          {currentSimProduct.isChristmasCapsule && <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-amber-300 text-[8px] font-bold">✦ Cápsula Navideña ✦</span>}
                           {currentSimProduct.isExistingInStore && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[8px] font-extrabold uppercase tracking-wide border border-blue-200">
                               <Globe className="w-2.5 h-2.5" />
@@ -3139,6 +3154,7 @@ export default function App() {
                       </button>
                     </div>
 
+                    {currentSimProduct.isChristmasCapsule && <span className="self-start px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-amber-300 text-xs font-bold">✦ Cápsula Navideña ✦</span>}
                     <h2 className="text-2xl font-black text-slate-900 font-display">
                       {currentSimProduct.title || "Sin título"}
                     </h2>

@@ -7,6 +7,7 @@ export interface Product {
   sizes?: string;
   colors?: string;
   sizesCount?: number;
+  isChristmasCapsule?: boolean;
   isExistingInStore?: boolean;
   externalStoreUrl?: string;
 }
