@@ -144,6 +144,10 @@ function extractJSON(text: string, startMarker: string, openChar: string, closeC
   return null;
 }
 
+function ChristmasDetail() {
+  return <div aria-hidden="true" className="flex items-center justify-center gap-1.5 mx-auto mt-1.5 max-w-[150px] leading-none"><span className="h-px flex-1 bg-[#8ab28f]" /><span className="text-[#e8ad30] text-[11px]">✦</span><span className="text-[#df635d] text-[6px]">●</span><span className="text-[#e8ad30] text-[11px]">✦</span><span className="h-px flex-1 bg-[#8ab28f]" /></div>;
+}
+
 export default function App() {
   // --- Persistent State ---
   const [products, setProducts] = useState<Product[]>(() => {
@@ -2698,8 +2702,8 @@ export default function App() {
                     <div className="space-y-3">
                       
                       {/* Product page header indicator */}
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1.5 mb-1">
+                      <div className={currentSimProduct.isChristmasCapsule ? "text-center rounded-xl border-t-[3px] border-[#dba73c] bg-gradient-to-b from-[#fff8f4] to-white px-2 pt-2 pb-1.5" : "text-center"}>
+                        <div className="flex items-center justify-center gap-1.5 mb-1 flex-wrap">
                           <span
                             className={`inline-block px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                               previewDevice === "desktop" ? "text-[10px]" : "text-[8.5px]"
@@ -2724,6 +2728,7 @@ export default function App() {
                         }`}>
                           {currentSimProduct.title || "Sin título"}
                         </h4>
+                        {currentSimProduct.isChristmasCapsule && <ChristmasDetail />}
                       </div>
 
                       {/* Main Image Screen */}
@@ -3161,6 +3166,7 @@ export default function App() {
                     <h2 className="text-2xl font-black text-slate-900 font-display">
                       {currentSimProduct.title || "Sin título"}
                     </h2>
+                    {currentSimProduct.isChristmasCapsule && <ChristmasDetail />}
 
                     {/* Huge Product Image Container */}
                     <div className="relative aspect-square w-full max-h-[500px] min-h-[320px] mx-auto rounded-2xl overflow-hidden bg-white border border-slate-200/80 shadow-xs flex items-center justify-center p-3">

@@ -95,6 +95,7 @@ export const generateInteractiveCatalogHtml = (
               ` : ''}
             </div>
             <h2 class="product-title">${escapeHtml(title)}</h2>
+            ${product.isChristmasCapsule ? `<div class="christmas-detail" aria-hidden="true"><span></span><b>✦</b><i>●</i><b>✦</b><span></span></div>` : ''}
           </div>
 
           <!-- Main Image Display -->
@@ -1656,7 +1657,11 @@ export const generateInteractiveCatalogHtml = (
     .christmas-cover-content p { font-size: 12px; margin: 0 auto 16px; max-width: 260px; }
     .christmas-cover-content button { cursor: pointer; border: 1px solid #a92e38; border-radius: 999px; padding: 10px 20px; background: #a92e38; color: #fff; font-weight: 800; }
     .christmas-badge { background: #e7f2e8; color: #245b3e; border: 1px solid #d3b36d; padding: 3px 8px; border-radius: 999px; font-size: 9px; font-weight: 800; }
-    .christmas-product .product-header { border-top: 3px solid #d3b36d; border-radius: 8px; }
+    .christmas-product .product-header { border-top: 3px solid #dba73c; border-radius: 12px; background: linear-gradient(180deg, #fff8f4, #fff); padding: 8px 8px 6px; }
+    .christmas-detail { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 6px auto 0; max-width: 150px; line-height: 1; }
+    .christmas-detail span { height: 1px; flex: 1; background: #8ab28f; }
+    .christmas-detail b { color: #e8ad30; font-size: 11px; }
+    .christmas-detail i { color: #df635d; font-size: 6px; font-style: normal; }
     .grid-view-overlay {
       position: absolute;
       top: 0;
