@@ -421,8 +421,8 @@ export const generateInteractiveCatalogHtml = (
         max-width: 1220px;
         height: 90vh;
         max-height: 920px;
-        min-height: 620px;
-        overflow: visible;
+        min-height: 0;
+        overflow: hidden;
         border-radius: 24px;
       }
       .product-slide {
@@ -555,7 +555,7 @@ export const generateInteractiveCatalogHtml = (
         max-width: 1320px;
         height: 92vh;
         max-height: 960px;
-        min-height: 680px;
+        min-height: 0;
       }
       .product-slide {
         gap: 40px;
@@ -952,10 +952,10 @@ export const generateInteractiveCatalogHtml = (
         opacity: 0.8;
       }
       .nav-btn.prev {
-        left: -64px;
+        left: 10px;
       }
       .nav-btn.next {
-        right: -64px;
+        right: 10px;
       }
       .nav-btn svg, .nav-btn path {
         width: 24px;
@@ -1662,8 +1662,8 @@ export const generateInteractiveCatalogHtml = (
       width: 18px;
       height: 18px;
     }
-    .editorial-slide { padding: 0 !important; background: #111; display: flex; align-items: center; justify-content: center; }
-    .editorial-slide img { width: 100%; height: 100%; display: block; }
+    .slide.editorial-slide { padding: 0 !important; background: #111; display: flex !important; align-items: center; justify-content: center; overflow: hidden !important; min-height: 0; }
+    .editorial-slide img { display: block; width: 100%; height: 100%; max-width: 100%; max-height: 100%; min-width: 0; min-height: 0; flex: 0 1 auto; }
     .slide.christmas-cover { display: flex !important; overflow: hidden !important; padding: 0 !important; position: relative; background: #fffdf9 url('${christmasCover}') center / contain no-repeat; color: #a92e38; display: flex; align-items: center; justify-content: center; text-align: center; }
     .christmas-cover-content { padding: 20px; transform: translateY(-28%); }
     .christmas-cover-content span { font-size: 10px; letter-spacing: .2em; color: #a92e38; font-weight: 700; }
@@ -2739,26 +2739,18 @@ export const generateInteractiveCatalogHtml = (
       // Turn off scroll-snap temporarily so iOS allows programmatic scrolling without fighting it
       slidesWindow.style.scrollSnapType = 'none';
       
-      try {
-        if (typeof slidesWindow.scrollTo === 'function') {
-          slidesWindow.scrollTo({
-            left: currentIndex * width,
-            behavior: 'smooth'
-          });
-        } else {
-          slidesWindow.scrollLeft = currentIndex * width;
-        }
-      } catch (e) {
-        slidesWindow.scrollLeft = currentIndex * width;
-      }
-      
+      // An immediate scroll avoids smooth-scroll and snap competing on desktop.
+      slidesWindow.style.scrollBehavior = 'auto';
+      slidesWindow.scrollLeft = currentIndex * width;
+
       if (scrollTimeout) clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(function() {
         if (slidesWindow) {
           slidesWindow.style.scrollSnapType = 'x mandatory';
+          slidesWindow.style.scrollBehavior = '';
         }
         isScrollingProgrammatically = false;
-      }, 500);
+      }, 120);
       
       updateArrowsState();
     }
