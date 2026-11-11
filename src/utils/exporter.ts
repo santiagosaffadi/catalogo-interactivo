@@ -366,6 +366,10 @@ export const generateInteractiveCatalogHtml = (
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <script>
+    // A catalog can be large: remember an early cover click until navigation is ready.
+    window.goToSlide = function(index) { window.pendingCatalogSlide = index; };
+  </script>
   <title>${escapeHtml(settings.storeName)} - Catálogo Interactivo</title>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2855,6 +2859,11 @@ export const generateInteractiveCatalogHtml = (
     loadContactFields();
     updateArrowsState();
     updateFinalSummary();
+    if (typeof window.pendingCatalogSlide === 'number') {
+      var pendingSlide = window.pendingCatalogSlide;
+      delete window.pendingCatalogSlide;
+      window.goToSlide(pendingSlide);
+    }
   </script>
 </body>
 </html>`;
