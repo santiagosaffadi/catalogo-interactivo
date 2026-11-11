@@ -1587,7 +1587,7 @@ export default function App() {
               <div key={page.id} className="border border-slate-200 rounded-xl p-2 space-y-2">
                 <div className="flex items-center gap-2"><img src={page.image} alt="" className="w-12 h-16 object-cover rounded-lg" /><div className="flex-1 min-w-0"><p className="text-xs font-bold">Foto {index + 1}</p><button type="button" onClick={() => setEditorialPreview(page)} className="text-xs text-blue-700 font-semibold">Ver foto</button></div><button type="button" aria-label={`Subir foto ${index + 1}`} disabled={index === 0} onClick={() => moveEditorialPage(page.id, -1)} className="p-1 disabled:opacity-30">↑</button><button type="button" aria-label={`Bajar foto ${index + 1}`} disabled={index === pages.length - 1} onClick={() => moveEditorialPage(page.id, 1)} className="p-1 disabled:opacity-30">↓</button><button type="button" aria-label={`Quitar foto ${index + 1}`} onClick={() => setSettings(prev => ({ ...prev, editorialPages: (prev.editorialPages || []).filter(item => item.id !== page.id) }))} className="p-1 text-rose-600"><Trash2 className="w-4 h-4" /></button></div>
                 <label className="block text-xs text-slate-600">Ubicación<select value={products.some(p => p.id === page.beforeProductId) ? page.beforeProductId : ""} onChange={e => changeEditorialPage(page.id, { beforeProductId: e.target.value })} className="block w-full mt-1 rounded-lg border border-slate-300 p-1.5 text-xs"><option value="">Después de todas las prendas</option>{products.map((p, i) => <option key={p.id} value={p.id}>Antes de #{i + 1} · {p.title || "Sin título"}</option>)}</select></label>
-                <label className="block text-xs text-slate-600">Ajuste de imagen<select value={page.fit || "cover"} onChange={e => changeEditorialPage(page.id, { fit: e.target.value as "cover" | "contain" })} className="block w-full mt-1 rounded-lg border border-slate-300 p-1.5 text-xs"><option value="cover">Llenar pantalla (puede recortar)</option><option value="contain">Mostrar foto completa</option></select></label>
+                <label className="block text-xs text-slate-600">Ajuste de imagen<select value={page.fit || "cover"} onChange={e => changeEditorialPage(page.id, { fit: e.target.value as "cover" | "contain" })} className="block w-full mt-1 rounded-lg border border-slate-300 p-1.5 text-xs"><option value="cover">Llenar pantalla (puede recortar)</option><option value="contain">Mostrar foto completa</option></select></label><p className="text-[11px] text-slate-500">En computadora la foto siempre se muestra completa; este ajuste se aplica en celular.</p>
               </div>
             ))}
             </div>
@@ -2425,7 +2425,7 @@ export default function App() {
               {/* Slider screen simulator */}
               <div className="flex-1 relative overflow-hidden flex flex-col bg-white">
                 
-                {editorialPreview && <div className="absolute inset-0 z-[60] bg-black flex items-center justify-center"><img src={editorialPreview.image} alt="Vista previa de foto a pantalla completa" className="w-full h-full" style={{ objectFit: editorialPreview.fit || "cover" }} /><button type="button" onClick={() => setEditorialPreview(null)} className="absolute top-4 right-4 bg-white text-slate-900 rounded-full px-3 py-2 text-xs font-bold shadow">Cerrar vista</button></div>}
+                {editorialPreview && <div className="absolute inset-0 z-[60] bg-black flex items-center justify-center"><img src={editorialPreview.image} alt="Vista previa de foto a pantalla completa" className="w-full h-full" style={{ objectFit: previewDevice === "desktop" ? "contain" : editorialPreview.fit || "cover" }} /><button type="button" onClick={() => setEditorialPreview(null)} className="absolute top-4 right-4 bg-white text-slate-900 rounded-full px-3 py-2 text-xs font-bold shadow">Cerrar vista</button></div>}
                 {/* Floating Grid Button (Top-Left) */}
                 {simPageIndex < products.length && (
                   <div className="absolute top-3 left-3 z-30">
@@ -2502,7 +2502,7 @@ export default function App() {
                 )}
 
                 {navigatedPhoto ? (
-                  <div className="flex-1 min-h-0 bg-black"><img src={navigatedPhoto.image} alt="Foto de presentación del catálogo" className="w-full h-full" style={{ objectFit: navigatedPhoto.fit || "cover" }} /></div>
+                  <div className="flex-1 min-h-0 bg-black"><img src={navigatedPhoto.image} alt="Foto de presentación del catálogo" className="w-full h-full" style={{ objectFit: previewDevice === "desktop" ? "contain" : navigatedPhoto.fit || "cover" }} /></div>
                 ) : simPageIndex === products.length ? (
                   // SUMMARY PAGE IN SIMULATOR
                   <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar p-3.5 justify-between">
@@ -3167,7 +3167,7 @@ export default function App() {
             {/* Modal Body: Full Desktop Catalog Simulator or Mosaic Grid */}
             <div className="flex-1 overflow-y-auto p-6 bg-slate-100 flex items-center justify-center">
               {navigatedPhoto && !isPcMosaicOpen ? (
-                <div className="w-full h-full bg-black flex items-center justify-center"><img src={navigatedPhoto.image} alt="Foto de presentación del catálogo" className="w-full h-full" style={{ objectFit: navigatedPhoto.fit || "cover" }} /></div>
+                <div className="w-full h-full bg-black flex items-center justify-center"><img src={navigatedPhoto.image} alt="Foto de presentación del catálogo" className="w-full h-full" style={{ objectFit: "contain" }} /></div>
               ) : isPcMosaicOpen ? (
                 <div className="w-full max-w-[1180px] bg-white rounded-2xl shadow-lg border border-slate-200 p-6 space-y-4 my-auto">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100">

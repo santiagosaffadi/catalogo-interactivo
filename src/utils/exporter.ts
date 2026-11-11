@@ -1664,6 +1664,9 @@ export const generateInteractiveCatalogHtml = (
     }
     .slide.editorial-slide { padding: 0 !important; background: #111; display: flex !important; align-items: center; justify-content: center; overflow: hidden !important; min-height: 0; }
     .editorial-slide img { display: block; width: 100%; height: 100%; max-width: 100%; max-height: 100%; min-width: 0; min-height: 0; flex: 0 1 auto; }
+    @media (min-width: 768px) {
+      .editorial-slide img { object-fit: contain !important; }
+    }
     .slide.christmas-cover { display: flex !important; overflow: hidden !important; padding: 0 !important; position: relative; background: #fffdf9 url('${christmasCover}') center / contain no-repeat; color: #a92e38; display: flex; align-items: center; justify-content: center; text-align: center; }
     .christmas-cover-content { padding: 20px; transform: translateY(-28%); }
     .christmas-cover-content span { font-size: 10px; letter-spacing: .2em; color: #a92e38; font-weight: 700; }
